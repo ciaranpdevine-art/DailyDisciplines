@@ -1,0 +1,16 @@
+{
+  "name": "Daily Disciplines",
+  "short_name": "Disciplines",
+  "description": "A gamified daily habit and discipline tracker with streaks, XP, and levels.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#12132A",
+  "theme_color": "#12132A",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
