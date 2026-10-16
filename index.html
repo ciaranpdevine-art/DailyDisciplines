@@ -863,6 +863,133 @@
     font-family: var(--font-head);
   }
 
+  /* Drinks */
+  .cal-day.has-drinks {
+    background: var(--coral-dim);
+    color: var(--text);
+    font-weight: 700;
+  }
+  .cal-day.selected {
+    outline: 2px solid var(--coral);
+    outline-offset: -2px;
+  }
+  .cal-day-badge {
+    position: absolute;
+    bottom: 1px;
+    right: 2px;
+    font-size: 7.5px;
+    font-family: var(--font-head);
+    background: var(--coral);
+    color: #1a0e0a;
+    border-radius: 999px;
+    padding: 0 3px;
+    line-height: 1.3;
+  }
+  .drink-month-summary {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .drink-stat {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 10px;
+    text-align: center;
+  }
+  .drink-stat b {
+    display: block;
+    font-family: var(--font-head);
+    font-size: 18px;
+    color: var(--coral);
+  }
+  .drink-stat span {
+    font-size: 10.5px;
+    color: var(--text-dim);
+  }
+  .drink-day-panel {
+    margin-top: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px;
+  }
+  .drink-day-panel-title {
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .drink-entry-list {
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .drink-entry {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 9px 10px;
+  }
+  .drink-entry-text { flex: 1; font-size: 13.5px; min-width: 0; }
+  .drink-entry-cost { font-family: var(--font-head); font-size: 12.5px; color: var(--coral); flex-shrink: 0; }
+  .drink-del {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    color: var(--text-dim);
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .drink-del:active { opacity: 1; }
+  .drink-add-row {
+    display: flex;
+    gap: 8px;
+  }
+  .drink-type-select {
+    flex: 1;
+    min-width: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--bg-2) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1L6 6L11 1" stroke="%239598C4" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 11px center;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 11px 28px 11px 12px;
+  }
+  .drink-type-select:focus { border-color: var(--violet); outline: none; }
+  .drink-qty-input { flex: 0 0 58px; min-width: 0; }
+  .drink-cost-input { flex: 0 0 76px; min-width: 0; }
+  .drink-other-input {
+    margin-top: 8px;
+    width: 100%;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+  }
+  .drink-other-input::placeholder { color: var(--text-dim); }
+  .drink-other-input:focus { border-color: var(--violet); }
+
   /* Sections */
   .section-label {
     font-family: var(--font-head);
@@ -1159,6 +1286,7 @@
     <button class="tab-btn active" data-tab="today" id="tabTodayBtn">Today</button>
     <button class="tab-btn" data-tab="add" id="tabAddBtn">Add</button>
     <button class="tab-btn" data-tab="calendar" id="tabCalendarBtn">Calendar</button>
+    <button class="tab-btn" data-tab="drinks" id="tabDrinksBtn">Drinks</button>
   </div>
 
   <div id="todayView">
@@ -1280,6 +1408,40 @@
     <div class="cal-summary" id="calSummary"></div>
   </div>
 
+  <div id="drinksView" style="display:none">
+    <div class="cal-card">
+      <div class="cal-nav">
+        <button id="drinkCalPrev" aria-label="Previous month">‹</button>
+        <span id="drinkCalMonthLabel">Month Year</span>
+        <button id="drinkCalNext" aria-label="Next month">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+      </div>
+      <div class="cal-grid" id="drinkCalGrid"></div>
+    </div>
+    <div id="drinkMonthSummary"></div>
+
+    <div class="drink-day-panel" id="drinkDayPanel">
+      <div class="drink-day-panel-title" id="drinkDayPanelTitle">Today</div>
+      <ul class="drink-entry-list" id="drinkEntryList"></ul>
+      <div class="drink-add-row">
+        <select id="drinkTypeSelect" class="drink-type-select">
+          <option value="pint">Pint</option>
+          <option value="bottle">Bottle</option>
+          <option value="can">Can</option>
+          <option value="shot">Shot</option>
+          <option value="other">Other</option>
+        </select>
+        <input id="drinkQtyInput" type="number" class="task-xp-input drink-qty-input" min="1" step="1" value="1" placeholder="Qty" />
+        <input id="drinkCostInput" type="number" class="task-xp-input drink-cost-input" min="0" step="0.01" placeholder="£ cost" />
+      </div>
+      <input id="drinkOtherInput" type="text" class="drink-other-input" placeholder="What was it? (e.g. Cocktail)" maxlength="30" style="display:none;" />
+      <button class="add-btn-wide" id="drinkAddBtn" type="button">Add drink</button>
+      <div class="form-error" id="drinkFormError"></div>
+    </div>
+  </div>
+
 </div>
 
 <div class="celebrate" id="celebrate">
@@ -1374,6 +1536,7 @@
     if (!parsed.targetHistory || typeof parsed.targetHistory !== 'object' || Object.keys(parsed.targetHistory).length === 0) {
       parsed.targetHistory = { '0000-01-01': parsed.dailyTarget };
     }
+    if (!parsed.drinks || typeof parsed.drinks !== 'object') parsed.drinks = {};
     return parsed;
   }
 
@@ -1422,6 +1585,7 @@
       totalXp: 0,
       dailyTarget: 150,
       targetHistory: { '0000-01-01': 150 }, // date -> target in effect from that date on
+      drinks: {},           // date -> [{id, type, label, qty, cost}]
       lastActiveDate: todayStr(),
       celebratedToday: false,
       historyBackfillDone: true,
@@ -1660,9 +1824,11 @@
   var tabTodayBtn = document.getElementById('tabTodayBtn');
   var tabAddBtn = document.getElementById('tabAddBtn');
   var tabCalendarBtn = document.getElementById('tabCalendarBtn');
+  var tabDrinksBtn = document.getElementById('tabDrinksBtn');
   var todayView = document.getElementById('todayView');
   var addView = document.getElementById('addView');
   var calendarView = document.getElementById('calendarView');
+  var drinksView = document.getElementById('drinksView');
   var manageListWrap = document.getElementById('manageListWrap');
   var calTaskSelect = document.getElementById('calTaskSelect');
   var calGrid = document.getElementById('calGrid');
@@ -1670,22 +1836,40 @@
   var calSummary = document.getElementById('calSummary');
   var calPrev = document.getElementById('calPrev');
   var calNext = document.getElementById('calNext');
+  var drinkCalGrid = document.getElementById('drinkCalGrid');
+  var drinkCalMonthLabel = document.getElementById('drinkCalMonthLabel');
+  var drinkCalPrev = document.getElementById('drinkCalPrev');
+  var drinkCalNext = document.getElementById('drinkCalNext');
+  var drinkMonthSummary = document.getElementById('drinkMonthSummary');
+  var drinkDayPanelTitle = document.getElementById('drinkDayPanelTitle');
+  var drinkEntryList = document.getElementById('drinkEntryList');
+  var drinkTypeSelect = document.getElementById('drinkTypeSelect');
+  var drinkQtyInput = document.getElementById('drinkQtyInput');
+  var drinkCostInput = document.getElementById('drinkCostInput');
+  var drinkOtherInput = document.getElementById('drinkOtherInput');
+  var drinkAddBtn = document.getElementById('drinkAddBtn');
+  var drinkFormError = document.getElementById('drinkFormError');
 
   var now = new Date();
   var calState = { year: now.getFullYear(), month: now.getMonth(), selectedTaskId: null };
+  var drinkCalState = { year: now.getFullYear(), month: now.getMonth(), selectedDate: todayStr() };
+  var DRINK_TYPES = { pint: 'Pint', bottle: 'Bottle', can: 'Can', shot: 'Shot', other: 'Other' };
 
   var TABS = {
     today: { btn: null, view: null },
     add: { btn: null, view: null },
-    calendar: { btn: null, view: null }
+    calendar: { btn: null, view: null },
+    drinks: { btn: null, view: null }
   };
   TABS.today.btn = tabTodayBtn; TABS.today.view = todayView;
   TABS.add.btn = tabAddBtn; TABS.add.view = addView;
   TABS.calendar.btn = tabCalendarBtn; TABS.calendar.view = calendarView;
+  TABS.drinks.btn = tabDrinksBtn; TABS.drinks.view = drinksView;
 
   tabTodayBtn.addEventListener('click', function(){ switchTab('today'); });
   tabAddBtn.addEventListener('click', function(){ switchTab('add'); });
   tabCalendarBtn.addEventListener('click', function(){ switchTab('calendar'); });
+  tabDrinksBtn.addEventListener('click', function(){ switchTab('drinks'); });
 
   function switchTab(tab) {
     Object.keys(TABS).forEach(function(key){
@@ -1695,6 +1879,7 @@
     });
     if (tab === 'add') renderManageList();
     if (tab === 'calendar') renderCalendar();
+    if (tab === 'drinks') renderDrinksTab();
   }
 
   calPrev.addEventListener('click', function(){ changeMonth(-1); });
@@ -1826,6 +2011,179 @@
     save();
     render();
     renderCalendar();
+  }
+
+  // ---- Drinks tab ----
+  drinkCalPrev.addEventListener('click', function(){ changeDrinkMonth(-1); });
+  drinkCalNext.addEventListener('click', function(){ changeDrinkMonth(1); });
+
+  drinkTypeSelect.addEventListener('change', function(){
+    drinkOtherInput.style.display = drinkTypeSelect.value === 'other' ? '' : 'none';
+  });
+
+  drinkAddBtn.addEventListener('click', function(){
+    var type = drinkTypeSelect.value;
+    var qty = parseInt(drinkQtyInput.value, 10);
+    var cost = parseFloat(drinkCostInput.value);
+    if (!qty || qty < 1) { showDrinkError('Enter how many.'); return; }
+    if (isNaN(cost) || cost < 0) cost = 0;
+    var label = '';
+    if (type === 'other') {
+      label = drinkOtherInput.value.trim();
+      if (!label) { showDrinkError('Say what it was.'); return; }
+    }
+    var dKey = drinkCalState.selectedDate;
+    if (!state.drinks) state.drinks = {};
+    if (!state.drinks[dKey]) state.drinks[dKey] = [];
+    state.drinks[dKey].push({ id: uid(), type: type, label: label, qty: qty, cost: Math.round(cost * 100) / 100 });
+    drinkQtyInput.value = 1;
+    drinkCostInput.value = '';
+    drinkOtherInput.value = '';
+    drinkFormError.classList.remove('show');
+    save();
+    renderDrinksTab();
+  });
+
+  function showDrinkError(msg) {
+    drinkFormError.textContent = msg;
+    drinkFormError.classList.add('show');
+  }
+
+  function drinkEntriesOnDate(dateKey) {
+    return (state.drinks && state.drinks[dateKey]) || [];
+  }
+
+  function drinkUnitsOnDate(dateKey) {
+    return drinkEntriesOnDate(dateKey).reduce(function(sum, e){ return sum + (e.qty || 0); }, 0);
+  }
+
+  function drinkCostOnDate(dateKey) {
+    return drinkEntriesOnDate(dateKey).reduce(function(sum, e){ return sum + (e.cost || 0); }, 0);
+  }
+
+  function formatCost(n) {
+    return '£' + (Math.round(n * 100) / 100).toFixed(2);
+  }
+
+  function onDeleteDrinkEntry(dateKey, entryId) {
+    if (!state.drinks || !state.drinks[dateKey]) return;
+    state.drinks[dateKey] = state.drinks[dateKey].filter(function(e){ return e.id !== entryId; });
+    if (state.drinks[dateKey].length === 0) delete state.drinks[dateKey];
+    save();
+    renderDrinksTab();
+  }
+
+  function changeDrinkMonth(delta) {
+    drinkCalState.month += delta;
+    if (drinkCalState.month < 0) { drinkCalState.month = 11; drinkCalState.year -= 1; }
+    if (drinkCalState.month > 11) { drinkCalState.month = 0; drinkCalState.year += 1; }
+    renderDrinksTab();
+  }
+
+  function renderDrinksTab() {
+    drinkCalMonthLabel.textContent = new Date(drinkCalState.year, drinkCalState.month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
+    var firstWeekday = (new Date(drinkCalState.year, drinkCalState.month, 1).getDay() + 6) % 7;
+    var daysInMonth = new Date(drinkCalState.year, drinkCalState.month + 1, 0).getDate();
+    var todayKey = todayStr();
+
+    drinkCalGrid.innerHTML = '';
+    for (var p = 0; p < firstWeekday; p++) {
+      var pad = document.createElement('div');
+      pad.className = 'cal-day pad';
+      drinkCalGrid.appendChild(pad);
+    }
+
+    var monthUnits = 0, monthCost = 0;
+    var typeTotals = {};
+
+    for (var day = 1; day <= daysInMonth; day++) {
+      var dKey = drinkCalState.year + '-' + String(drinkCalState.month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      var entries = drinkEntriesOnDate(dKey);
+      var units = drinkUnitsOnDate(dKey);
+      monthUnits += units;
+      monthCost += drinkCostOnDate(dKey);
+      entries.forEach(function(e){
+        typeTotals[e.type] = (typeTotals[e.type] || 0) + (e.qty || 0);
+      });
+
+      var cell = document.createElement('div');
+      var isFuture = dKey > todayKey;
+      var hasDrinks = entries.length > 0;
+      cell.className = 'cal-day' +
+        (hasDrinks ? ' has-drinks' : '') +
+        (dKey === todayKey ? ' today' : '') +
+        (dKey === drinkCalState.selectedDate ? ' selected' : '') +
+        (isFuture ? ' future' : '');
+      cell.textContent = day;
+      if (hasDrinks) {
+        var badge = document.createElement('span');
+        badge.className = 'cal-day-badge';
+        badge.textContent = units;
+        cell.appendChild(badge);
+      }
+      if (!isFuture) {
+        cell.addEventListener('click', function(clickedKey){
+          return function(){ drinkCalState.selectedDate = clickedKey; renderDrinksTab(); };
+        }(dKey));
+      }
+      drinkCalGrid.appendChild(cell);
+    }
+
+    var typeOrder = ['pint', 'bottle', 'can', 'shot', 'other'];
+    var breakdownHtml = typeOrder.filter(function(k){ return typeTotals[k]; }).map(function(k){
+      return '<span class="tier-count-chip">' + DRINK_TYPES[k] + ': ' + typeTotals[k] + '</span>';
+    }).join('');
+
+    var summaryHtml = '<div class="drink-month-summary">' +
+      '<div class="drink-stat"><b>' + monthUnits + '</b><span>drinks this month</span></div>' +
+      '<div class="drink-stat"><b>' + formatCost(monthCost) + '</b><span>spent this month</span></div>' +
+      '</div>';
+    if (breakdownHtml) summaryHtml += '<div class="tier-count-row">' + breakdownHtml + '</div>';
+    drinkMonthSummary.innerHTML = summaryHtml;
+
+    renderDrinkDayPanel();
+  }
+
+  function renderDrinkDayPanel() {
+    var dKey = drinkCalState.selectedDate;
+    var isToday = dKey === todayStr();
+    drinkDayPanelTitle.textContent = (isToday ? 'Today — ' : '') +
+      dateFromKey(dKey).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+
+    var entries = drinkEntriesOnDate(dKey);
+    drinkEntryList.innerHTML = '';
+    if (entries.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = '<span class="glyph">🍺</span>Nothing logged for this day.';
+      drinkEntryList.appendChild(empty);
+    } else {
+      entries.forEach(function(e){
+        var li = document.createElement('li');
+        li.className = 'drink-entry';
+
+        var text = document.createElement('div');
+        text.className = 'drink-entry-text';
+        var label = e.type === 'other' ? (e.label || 'Other') : DRINK_TYPES[e.type];
+        text.textContent = e.qty + 'x ' + label;
+
+        var cost = document.createElement('div');
+        cost.className = 'drink-entry-cost';
+        cost.textContent = formatCost(e.cost || 0);
+
+        var del = document.createElement('button');
+        del.className = 'drink-del';
+        del.setAttribute('aria-label', 'Delete entry');
+        del.textContent = '×';
+        del.addEventListener('click', function(){ onDeleteDrinkEntry(dKey, e.id); });
+
+        li.appendChild(text);
+        li.appendChild(cost);
+        li.appendChild(del);
+        drinkEntryList.appendChild(li);
+      });
+    }
   }
 
   function escapeHtml(str) {
