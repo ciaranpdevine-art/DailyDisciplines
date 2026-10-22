@@ -990,6 +990,37 @@
   .drink-other-input::placeholder { color: var(--text-dim); }
   .drink-other-input:focus { border-color: var(--violet); }
 
+  .backup-btn-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .backup-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    color: var(--text);
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .backup-btn:active { transform: scale(0.97); }
+  .backup-btn.small { flex: 0 0 auto; padding: 6px 12px; font-size: 12px; }
+  #restoreList { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .import-text {
+    width: 100%;
+    min-height: 70px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 10px 12px;
+    outline: none;
+    resize: vertical;
+  }
+  .import-text:focus { border-color: var(--violet); }
+
   /* Sections */
   .section-label {
     font-family: var(--font-head);
@@ -1388,6 +1419,18 @@
 
     <div class="section-label">Your disciplines</div>
     <div id="manageListWrap"></div>
+
+    <div class="section-label">Backup &amp; restore</div>
+    <div class="add-card">
+      <div class="backup-btn-row">
+        <button class="backup-btn" id="restoreBtn" type="button">Restore from backup</button>
+        <button class="backup-btn" id="exportBtn" type="button">Copy my data</button>
+      </div>
+      <div id="restoreList"></div>
+      <textarea id="importText" class="import-text" placeholder="Paste exported data, or a list of habits (JSON), to import"></textarea>
+      <button class="add-btn-wide" id="importBtn" type="button">Import</button>
+      <div class="form-error" id="importMsg"></div>
+    </div>
   </div>
 
   <div id="calendarView" style="display:none">
@@ -1458,6 +1501,11 @@
 (function(){
   var STORAGE_KEY = 'daily_disciplines_state_v1';
   var state = null;
+  // True when this device started with NO usable local data (first run, or the
+  // phone cleared the app's storage). Until the cloud copy has been pulled, such
+  // a device must never push its empty state up and overwrite real data.
+  var localWasFresh = false;
+  var cloudSynced = false;
 
   // ---- Firebase (optional cross-device sync) ----
   // Fill these in with your own project's values from the Firebase console
@@ -1498,6 +1546,9 @@
       } else {
         ref.set(state).catch(function(){});
       }
+      cloudSynced = true;
+      localWasFresh = false;
+      maybeCloudBackup();
       ref.onSnapshot(function(snap2){
         if (suppressNextSnapshot) { suppressNextSnapshot = false; return; }
         if (snap2.exists) applyRemoteState(snap2.data());
@@ -1543,9 +1594,13 @@
   function applyRemoteState(remote) {
     if (!remote || !Array.isArray(remote.tasks)) return;
 
+    // A device that started with no local data always takes the cloud copy,
+    // however "new" its own empty timestamp looks.
+    var forcePull = localWasFresh && !cloudSynced;
+
     // If our local copy is newer than what the cloud has, don't lose it —
     // push it up instead of pulling the older remote copy down.
-    if (state && typeof state.updatedAt === 'number' && typeof remote.updatedAt === 'number'
+    if (!forcePull && state && typeof state.updatedAt === 'number' && typeof remote.updatedAt === 'number'
         && remote.updatedAt < state.updatedAt) {
       save();
       return;
@@ -1574,6 +1629,25 @@
     } catch (e) { /* backups are best-effort, never block on them */ }
   }
 
+  // Once a day, store a dated snapshot in the cloud (kept 30 days) so a bad
+  // overwrite can always be rolled back from the Add tab → Backup & restore.
+  var BACKUP_DOC_PREFIX = 'backup-';
+  var LAST_CLOUD_BACKUP_KEY = 'daily_disciplines_last_cloud_backup';
+  function maybeCloudBackup() {
+    try {
+      if (!cloudReady || !db || !cloudSynced) return;
+      if (!state || !Array.isArray(state.tasks) || state.tasks.length === 0) return;
+      var today = todayStr();
+      if (localStorage.getItem(LAST_CLOUD_BACKUP_KEY) === today) return;
+      var col = db.collection(SYNC_DOC.collection);
+      col.doc(BACKUP_DOC_PREFIX + today).set(state).then(function(){
+        try { localStorage.setItem(LAST_CLOUD_BACKUP_KEY, today); } catch (e) {}
+      }).catch(function(){});
+      var old = new Date(); old.setDate(old.getDate() - 30);
+      col.doc(BACKUP_DOC_PREFIX + todayStr(old)).delete().catch(function(){});
+    } catch (e) { /* best effort */ }
+  }
+
   function todayStr(d) {
     d = d || new Date();
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -1594,13 +1668,17 @@
   }
 
   function load() {
+    var raw = null;
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultState();
+      raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) { localWasFresh = true; return defaultState(); }
       var parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.tasks)) return defaultState();
+      if (!parsed || !Array.isArray(parsed.tasks)) { localWasFresh = true; return defaultState(); }
       return migrateState(parsed);
     } catch (e) {
+      // Unreadable save: keep the raw text aside instead of silently overwriting it.
+      try { if (raw) localStorage.setItem('daily_disciplines_corrupt_raw', raw); } catch (e2) {}
+      localWasFresh = true;
       return defaultState();
     }
   }
@@ -1609,7 +1687,8 @@
     state.updatedAt = Date.now();
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch (e) { /* storage unavailable — continue in-memory */ }
-    if (cloudReady && db) {
+    // Never push from a device that started empty until it has pulled the cloud copy.
+    if (cloudReady && db && !(localWasFresh && !cloudSynced)) {
       suppressNextSnapshot = true;
       db.collection(SYNC_DOC.collection).doc(SYNC_DOC.doc).set(state)
         .catch(function(){ /* offline — Firestore queues and retries automatically */ });
@@ -3016,6 +3095,174 @@
   });
   taskXpInput.addEventListener('keydown', function(e){
     if (e.key === 'Enter') addTask();
+  });
+
+  // ---- Backup & restore / import ----
+  var restoreBtn = document.getElementById('restoreBtn');
+  var exportBtn = document.getElementById('exportBtn');
+  var restoreList = document.getElementById('restoreList');
+  var importText = document.getElementById('importText');
+  var importBtn = document.getElementById('importBtn');
+  var importMsg = document.getElementById('importMsg');
+
+  function showImportMsg(msg) {
+    importMsg.textContent = msg;
+    importMsg.classList.add('show');
+  }
+
+  function refreshAllViews() {
+    render();
+    renderManageList();
+    renderCalendar();
+    renderDrinksTab();
+  }
+
+  function restoreFromSnapshot(snapshot) {
+    if (!window.confirm('Replace everything currently in the app with this backup?')) return;
+    backupLocalState(state);
+    state = migrateState(JSON.parse(JSON.stringify(snapshot)));
+    localWasFresh = false; // an explicit restore is allowed to sync up
+    save();
+    rolloverIfNewDay();
+    refreshAllViews();
+    restoreList.innerHTML = '';
+    showImportMsg('Restored.');
+  }
+
+  function renderRestoreList(items) {
+    restoreList.innerHTML = '';
+    if (items.length === 0) {
+      var none = document.createElement('div');
+      none.className = 'cal-hint';
+      none.textContent = 'No backups found yet. A cloud backup is saved automatically once a day from now on.';
+      restoreList.appendChild(none);
+      return;
+    }
+    items.forEach(function(item){
+      var row = document.createElement('div');
+      row.className = 'drink-entry';
+      var text = document.createElement('div');
+      text.className = 'drink-entry-text';
+      text.textContent = item.label + ' · ' + item.state.tasks.length + ' habits';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'backup-btn small';
+      btn.textContent = 'Restore';
+      btn.addEventListener('click', function(){ restoreFromSnapshot(item.state); });
+      row.appendChild(text);
+      row.appendChild(btn);
+      restoreList.appendChild(row);
+    });
+  }
+
+  restoreBtn.addEventListener('click', function(){
+    importMsg.classList.remove('show');
+    restoreList.innerHTML = '<div class="cal-hint">Looking for backups…</div>';
+    var cloudItems = [];
+    var phoneItems = [];
+    try {
+      var lb = JSON.parse(localStorage.getItem(BACKUP_KEY) || '[]');
+      if (Array.isArray(lb)) lb.forEach(function(b){
+        if (b && b.state && Array.isArray(b.state.tasks) && b.state.tasks.length) {
+          phoneItems.push({ label: 'This phone · ' + new Date(b.savedAt).toLocaleString(), state: b.state });
+        }
+      });
+    } catch (e) {}
+    function finish() { renderRestoreList(cloudItems.concat(phoneItems)); }
+    if (cloudReady && db) {
+      db.collection(SYNC_DOC.collection).get().then(function(snap){
+        var found = [];
+        snap.forEach(function(d){
+          if (d.id.indexOf(BACKUP_DOC_PREFIX) !== 0) return;
+          var data = d.data();
+          if (data && Array.isArray(data.tasks) && data.tasks.length) {
+            found.push({ id: d.id, label: 'Cloud · ' + d.id.slice(BACKUP_DOC_PREFIX.length), state: data });
+          }
+        });
+        found.sort(function(a, b){ return a.id < b.id ? 1 : -1; });
+        cloudItems = found;
+        finish();
+      }).catch(finish);
+    } else {
+      finish();
+    }
+  });
+
+  exportBtn.addEventListener('click', function(){
+    var text = JSON.stringify(state);
+    function fallback() {
+      importText.value = text;
+      importText.focus();
+      importText.select();
+      showImportMsg('Copy didn\'t work automatically. The data is in the box below: select all and copy it.');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){
+        showImportMsg('Copied. Paste it somewhere safe (e.g. a note to yourself).');
+      }).catch(fallback);
+    } else {
+      fallback();
+    }
+  });
+
+  function normalizeImportedTask(t) {
+    if (!t || typeof t.text !== 'string' || !t.text.trim()) return null;
+    var out = {
+      id: uid(),
+      type: 'simple',
+      text: t.text.trim(),
+      category: typeof t.category === 'string' ? t.category : '',
+      history: (t.history && typeof t.history === 'object') ? t.history : {}
+    };
+    if (t.type === 'group') {
+      if (!Array.isArray(t.tiers) || t.tiers.length < 2) return null;
+      var sign = (t.sign || 1) < 0 ? -1 : 1;
+      out.type = 'group';
+      out.sign = sign;
+      out.tiers = t.tiers.map(function(tier){
+        var xp = parseInt(tier.xp, 10);
+        if (isNaN(xp)) xp = 0;
+        return { id: tier.id || uid(), label: String(tier.label || ''), xp: sign < 0 ? -Math.abs(xp) : xp };
+      });
+    } else if (t.type === 'counter') {
+      out.type = 'counter';
+      out.unit = typeof t.unit === 'string' ? t.unit : '';
+      out.unitsPerXp = Math.max(1, parseInt(t.unitsPerXp, 10) || 1);
+      out.sign = (t.sign || 1) < 0 ? -1 : 1;
+    } else {
+      var size = parseInt(t.size, 10);
+      if (isNaN(size) || size === 0) return null;
+      out.size = size;
+      out.done = false;
+    }
+    return out;
+  }
+
+  importBtn.addEventListener('click', function(){
+    importMsg.classList.remove('show');
+    var txt = importText.value.trim();
+    if (!txt) { showImportMsg('Paste some data first.'); return; }
+    var data;
+    try { data = JSON.parse(txt); } catch (e) { showImportMsg('That doesn\'t look like valid data.'); return; }
+
+    if (Array.isArray(data)) {
+      var added = 0;
+      data.forEach(function(raw){
+        var t = normalizeImportedTask(raw);
+        if (t) { state.tasks.push(t); added++; }
+      });
+      if (!added) { showImportMsg('No valid habits found in that list.'); return; }
+      localWasFresh = false;
+      save();
+      importText.value = '';
+      refreshAllViews();
+      showImportMsg('Added ' + added + ' habits.');
+    } else if (data && Array.isArray(data.tasks)) {
+      restoreFromSnapshot(data);
+      importText.value = '';
+    } else {
+      showImportMsg('Expected either a full export or a list of habits.');
+    }
   });
 
   render();
