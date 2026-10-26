@@ -1,7 +1,7 @@
 {
   "name": "Daily Disciplines",
   "short_name": "Disciplines",
-  "description": "A gamified daily habit and discipline tracker with streaks, XP, and levels.",
+  "description": "A daily checklist of disciplines with per-discipline streaks and a calendar history.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

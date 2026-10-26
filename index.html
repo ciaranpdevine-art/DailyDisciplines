@@ -37,7 +37,8 @@
   }
   * { box-sizing: border-box; }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
-  html, body {
+  html,
+  body {
     height: 100%;
     margin: 0;
     background: var(--bg);
@@ -90,19 +91,6 @@
     padding: 7px 12px 7px 10px;
     flex-shrink: 0;
   }
-  .streak .flame {
-    font-size: 16px;
-    filter: grayscale(1) opacity(0.5);
-    transition: filter .25s ease, transform .25s ease;
-  }
-  .streak.active .flame {
-    filter: grayscale(0) opacity(1);
-    animation: flicker 1.6s ease-in-out infinite;
-  }
-  @keyframes flicker {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.08) rotate(-3deg); }
-  }
   .streak b {
     font-family: var(--font-head);
     font-size: 15px;
@@ -111,80 +99,6 @@
     color: var(--text-dim);
     font-size: 11.5px;
   }
-
-  /* XP bar */
-  .xp-card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
-  }
-  .xp-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 9px;
-  }
-  .xp-level {
-    font-family: var(--font-head);
-    font-weight: 600;
-    font-size: 14.5px;
-    color: var(--lime);
-  }
-  .xp-level-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .target-edit-btn {
-    background: none;
-    border: none;
-    color: var(--text-dim);
-    font-size: 12px;
-    cursor: pointer;
-    padding: 2px;
-    opacity: 0.8;
-  }
-  .target-edit-btn:active { opacity: 1; }
-  .target-edit-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  .target-edit-row .task-xp-input { flex: 0 0 80px; }
-  .xp-count {
-    font-size: 12px;
-    color: var(--text-dim);
-    font-variant-numeric: tabular-nums;
-  }
-  .xp-track {
-    height: 9px;
-    border-radius: 999px;
-    background: var(--bg-2);
-    overflow: hidden;
-    position: relative;
-  }
-  .xp-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--lime), #8fe0a8);
-    width: 0%;
-    transition: width .5s cubic-bezier(.34,1.56,.64,1);
-  }
-  .xp-today {
-    margin-top: 10px;
-    text-align: right;
-    font-size: 12px;
-    color: var(--text-dim);
-  }
-  .xp-today .val {
-    font-family: var(--font-head);
-    font-weight: 600;
-    color: var(--text-dim);
-  }
-  .xp-today .val.positive { color: var(--lime); }
-  .xp-today .val.negative { color: #FF8A8A; }
 
   /* Date navigator */
   .date-nav {
@@ -253,27 +167,6 @@
     border-radius: 999px;
     transition: width .4s ease;
   }
-  .today-filter {
-    display: flex;
-    gap: 7px;
-    margin-bottom: 16px;
-  }
-  .filter-btn {
-    flex: 1;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--text-dim);
-    font-family: var(--font-head);
-    font-weight: 600;
-    font-size: 12.5px;
-    padding: 8px 0;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all .15s ease;
-  }
-  .filter-btn.active { border-color: transparent; background: var(--surface-2); color: var(--text); }
-  .filter-btn.filter-good.active { background: rgba(199,244,100,0.16); color: var(--lime); }
-  .filter-btn.filter-bad.active { background: rgba(255,90,90,0.16); color: #FF8A8A; }
 
   /* Add task */
   .add-card {
@@ -283,24 +176,6 @@
     padding: 12px;
     margin-bottom: 22px;
   }
-  .add-row {
-    display: flex;
-    gap: 8px;
-  }
-  .add-row input {
-    flex: 1;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 15px;
-    padding: 11px 13px;
-    outline: none;
-    min-width: 0;
-  }
-  .add-row input::placeholder { color: var(--text-dim); }
-  .add-row input:focus { border-color: var(--violet); }
   .task-xp-input {
     background: var(--bg-2);
     border: 1px solid var(--line);
@@ -313,31 +188,6 @@
     text-align: center;
   }
   .task-xp-input:focus { border-color: var(--violet); }
-  .sign-toggle {
-    display: flex;
-    flex-shrink: 0;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .sign-btn {
-    width: 38px;
-    border: none;
-    background: transparent;
-    color: var(--text-dim);
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: 17px;
-    cursor: pointer;
-  }
-  .sign-btn:active { transform: scale(0.92); }
-  .sign-btn.selected[data-sign="1"] { background: rgba(199,244,100,0.18); color: var(--lime); }
-  .sign-btn.selected[data-sign="-1"] { background: rgba(255,90,90,0.18); color: #FF8A8A; }
-  .add-row .task-xp-input {
-    flex: 0 0 84px;
-    text-align: center;
-    font-family: var(--font-head);
-  }
   .add-btn-wide {
     width: 100%;
     margin-top: 10px;
@@ -352,96 +202,6 @@
     cursor: pointer;
   }
   .add-btn-wide:active { transform: scale(0.98); }
-  .add-btn {
-    flex-shrink: 0;
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    border: none;
-    background: var(--coral);
-    color: #1a0e0a;
-    font-size: 22px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform .15s ease;
-  }
-  .add-btn:active { transform: scale(0.9); }
-  .size-row {
-    display: flex;
-    gap: 7px;
-    margin-top: 10px;
-  }
-  .size-pill {
-    flex: 1;
-    text-align: center;
-    padding: 7px 0;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--text-dim);
-    font-family: var(--font-head);
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .15s ease;
-  }
-  .size-pill.selected {
-    border-color: transparent;
-  }
-  .size-pill[data-size="5"].selected { background: rgba(199,244,100,0.16); color: var(--lime); }
-  .size-pill[data-size="10"].selected { background: rgba(255,107,78,0.16); color: var(--coral); }
-  .size-pill[data-size="20"].selected { background: rgba(155,140,255,0.18); color: var(--violet); }
-  .type-row {
-    display: flex;
-    gap: 7px;
-    margin-top: 8px;
-  }
-  .type-btn {
-    flex: 1;
-    text-align: center;
-    padding: 8px 6px;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--text-dim);
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all .15s ease;
-  }
-  .type-btn.selected { border-color: transparent; }
-  .type-btn[data-sign="1"].selected { background: rgba(199,244,100,0.16); color: var(--lime); }
-  .type-btn[data-sign="-1"].selected { background: rgba(255,90,90,0.16); color: #FF8A8A; }
-
-  /* Creation type toggle */
-  .create-type-row {
-    display: flex;
-    gap: 7px;
-    margin-bottom: 14px;
-  }
-  .create-btn {
-    flex: 1;
-    text-align: center;
-    padding: 10px 0;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--text-dim);
-    font-family: var(--font-head);
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all .15s ease;
-  }
-  .create-btn.selected {
-    border-color: transparent;
-    background: rgba(155,140,255,0.18);
-    color: var(--violet);
-  }
 
   /* Group creation form */
   .group-name-input {
@@ -458,83 +218,6 @@
   }
   .group-name-input::placeholder { color: var(--text-dim); }
   .group-name-input:focus { border-color: var(--violet); }
-  .tier-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-  .tier-row {
-    display: flex;
-    gap: 7px;
-    align-items: center;
-  }
-  .tier-row input.tier-label-input {
-    flex: 1;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 14px;
-    padding: 9px 11px;
-    outline: none;
-    min-width: 0;
-  }
-  .tier-row input.tier-xp-input {
-    width: 68px;
-    flex-shrink: 0;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: var(--font-head);
-    font-size: 14px;
-    padding: 9px 6px;
-    outline: none;
-    text-align: center;
-  }
-  .tier-row input::placeholder { color: var(--text-dim); }
-  .tier-row input:focus { border-color: var(--violet); }
-  .tier-remove-btn {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    border: none;
-    background: none;
-    color: var(--text-dim);
-    font-size: 17px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .add-tier-btn {
-    width: 100%;
-    padding: 9px 0;
-    border-radius: 10px;
-    border: 1px dashed var(--line);
-    background: transparent;
-    color: var(--text-dim);
-    font-family: var(--font-head);
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-bottom: 12px;
-  }
-  .create-group-btn {
-    width: 100%;
-    padding: 12px 0;
-    border-radius: 12px;
-    border: none;
-    background: var(--violet);
-    color: #1a0e2a;
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-  }
-  .create-group-btn:active { transform: scale(0.98); }
   .form-error {
     color: #FF8A8A;
     font-size: 12px;
@@ -543,171 +226,6 @@
     display: none;
   }
   .form-error.show { display: block; }
-
-  /* Habit group cards (Today tab) */
-  .group-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .group-card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 14px;
-  }
-  .group-card.negative {
-    border-color: rgba(255,90,90,0.35);
-  }
-  .group-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 11px;
-    gap: 8px;
-  }
-  .group-name {
-    font-family: var(--font-head);
-    font-weight: 600;
-    font-size: 15px;
-    min-width: 0;
-  }
-  .group-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-  .task-xp.neg { color: #FF8A8A; }
-  .tier-chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .tier-chip {
-    border: 1px solid var(--line);
-    background: var(--bg-2);
-    color: var(--text-dim);
-    font-family: var(--font-body);
-    font-size: 12.5px;
-    font-weight: 500;
-    padding: 7px 11px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all .15s ease;
-  }
-  .tier-chip:active { transform: scale(0.94); }
-  .tier-chip.positive { border-color: rgba(199,244,100,0.35); color: var(--lime); }
-  .tier-chip.negative { border-color: rgba(255,90,90,0.35); color: #FF8A8A; }
-  .tier-chip.selected.positive { background: rgba(199,244,100,0.18); border-color: var(--lime); color: var(--lime); }
-  .tier-chip.selected.negative { background: rgba(255,90,90,0.18); border-color: #FF8A8A; color: #FF8A8A; }
-  .group-dot { background: var(--violet); }
-  .counter-dot { background: var(--coral); }
-  .task.negative .group-dot { background: #FF8A8A; }
-
-  /* Counter cards (Today tab) */
-  .counter-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 9px;
-  }
-  .counter-btn {
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    background: var(--bg-2);
-    color: var(--text);
-    font-size: 18px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .counter-btn:active { transform: scale(0.9); }
-  .counter-input {
-    flex: 1;
-    text-align: center;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: var(--font-head);
-    font-size: 16px;
-    padding: 8px 0;
-    outline: none;
-  }
-  .counter-input::-webkit-outer-spin-button,
-  .counter-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .counter-input:focus { border-color: var(--violet); }
-  .counter-quick-row {
-    display: flex;
-    gap: 7px;
-    margin-bottom: 8px;
-  }
-  .counter-quick-btn {
-    flex: 1;
-    padding: 6px 0;
-    border-radius: 8px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--text-dim);
-    font-family: var(--font-head);
-    font-size: 11.5px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .counter-quick-btn:active { transform: scale(0.92); }
-  .counter-unit-label {
-    font-size: 11px;
-    color: var(--text-dim);
-    text-align: center;
-  }
-
-  /* Counter creation form */
-  .counter-sentence-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 10px 0;
-    flex-wrap: wrap;
-  }
-  .counter-sentence-text {
-    color: var(--text-dim);
-    font-size: 14px;
-    font-family: var(--font-body);
-    flex-shrink: 0;
-  }
-  .counter-rate-input {
-    width: 56px;
-    flex-shrink: 0;
-    text-align: center;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: var(--font-head);
-    font-size: 14px;
-    padding: 9px 4px;
-    outline: none;
-  }
-  .counter-unit-input {
-    flex: 1;
-    min-width: 90px;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 14px;
-    padding: 9px 11px;
-    outline: none;
-  }
-  .counter-rate-input:focus, .counter-unit-input:focus { border-color: var(--violet); }
-  .counter-rate-input::placeholder, .counter-unit-input::placeholder { color: var(--text-dim); }
 
   /* Calendar tier breakdown */
   .tier-count-row {
@@ -1029,15 +547,6 @@
     color: var(--text-dim);
     margin: 4px 2px 10px;
   }
-  .category-label {
-    font-family: var(--font-head);
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--violet);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin: 10px 2px 7px;
-  }
   .category-badge {
     font-size: 10.5px;
     color: var(--text-dim);
@@ -1073,40 +582,6 @@
     opacity: 0.55;
     background: var(--bg-2);
   }
-  .check {
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    border: 2px solid var(--line);
-    flex-shrink: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform .15s ease, border-color .2s ease, background .2s ease;
-    background: transparent;
-  }
-  .check:active { transform: scale(0.85); }
-  .check svg {
-    width: 13px;
-    height: 13px;
-    opacity: 0;
-    transform: scale(0.5);
-    transition: all .2s cubic-bezier(.34,1.56,.64,1);
-  }
-  .task.done .check {
-    background: var(--lime);
-    border-color: var(--lime);
-  }
-  .task.done .check svg { opacity: 1; transform: scale(1); }
-  .task[data-size="20"] .check { border-color: var(--violet); }
-  .task[data-size="10"] .check { border-color: var(--coral); }
-  .task[data-size="5"] .check { border-color: var(--lime-dim); }
-  .task.negative .check { border-color: #FF8A8A; }
-  .task.negative.done .check {
-    background: #FF8A8A;
-    border-color: #FF8A8A;
-  }
 
   .task-text {
     flex: 1;
@@ -1126,20 +601,6 @@
     gap: 8px;
     flex-shrink: 0;
   }
-  .task-xp {
-    font-family: var(--font-head);
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-  .task.negative .task-xp { color: #FF8A8A; }
-  .manage-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: var(--lime);
-    flex-shrink: 0;
-  }
-  .task.negative .manage-dot { background: #FF8A8A; }
   .task-streak {
     font-family: var(--font-head);
     font-size: 11.5px;
@@ -1196,8 +657,8 @@
     min-width: 0;
   }
   .edit-row .task-xp-input { flex: 0 0 72px; min-width: 0; }
-  .edit-row .counter-unit-input { flex: 1; min-width: 0; }
-  .edit-save-btn, .edit-cancel-btn {
+  .edit-save-btn,
+  .edit-cancel-btn {
     flex: 1;
     padding: 9px 0;
     border-radius: 10px;
@@ -1227,23 +688,6 @@
     border-radius: 16px;
   }
   .empty .glyph { font-size: 26px; display: block; margin-bottom: 8px; }
-
-  /* floating xp */
-  .float-xp {
-    position: fixed;
-    pointer-events: none;
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: 15px;
-    color: var(--lime);
-    z-index: 50;
-    animation: floatUp 1s ease forwards;
-  }
-  @keyframes floatUp {
-    0% { opacity: 0; transform: translateY(0) scale(0.8); }
-    15% { opacity: 1; transform: translateY(-6px) scale(1); }
-    100% { opacity: 0; transform: translateY(-46px) scale(1); }
-  }
 
   /* celebration overlay */
   .celebrate {
@@ -1294,6 +738,86 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
   }
+
+  /* Disciplines list (v2) */
+  .count-pill {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 14px;
+    flex-shrink: 0;
+  }
+  .count-pill b { font-family: var(--font-head); font-size: 15px; color: var(--lime); }
+  .count-pill span { color: var(--text-dim); font-size: 11.5px; }
+  .task { cursor: pointer; }
+  .task.done { opacity: 0.8; }
+  .done-btn {
+    flex-shrink: 0;
+    border: 1.5px solid var(--lime);
+    background: transparent;
+    color: var(--lime);
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, transform .12s ease;
+  }
+  .done-btn:active { transform: scale(0.94); }
+  .task.done .done-btn { background: var(--lime); color: #12132A; }
+  .cal-day.partial { background: var(--lime-dim); color: var(--text); font-weight: 700; }
+
+  /* Day detail panel (calendar) */
+  .day-panel {
+    margin-top: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px;
+  }
+  .day-panel-title { font-family: var(--font-head); font-weight: 600; font-size: 14.5px; }
+  .day-panel-sub { font-size: 12px; color: var(--text-dim); margin: 2px 0 6px; }
+  .day-group-label {
+    font-family: var(--font-head);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 12px 0 6px;
+  }
+  .day-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 11px;
+    margin-bottom: 6px;
+    cursor: pointer;
+  }
+  .day-row:active { transform: scale(0.985); }
+  .day-row .mark {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #12132A;
+  }
+  .day-row.done .mark { background: var(--lime); border-color: var(--lime); }
+  .day-row .name { flex: 1; min-width: 0; font-size: 14px; word-break: break-word; }
+  .day-row:not(.done) .name { color: var(--text-dim); }
+  .day-hint { font-size: 11.5px; color: var(--text-dim); opacity: 0.8; margin-top: 8px; text-align: center; }
 </style>
 </head>
 <body>
@@ -1304,12 +828,9 @@
       <h1>Daily Disciplines</h1>
       <p id="dateLabel">Today</p>
     </div>
-    <div class="streak" id="streakBox">
-      <span class="flame">🔥</span>
-      <div>
-        <b id="streakCount">0</b>
-        <div class="label">day streak</div>
-      </div>
+    <div class="count-pill" id="countPill">
+      <b id="headerDone">0/0</b>
+      <span>done today</span>
     </div>
   </div>
 
@@ -1327,95 +848,26 @@
       <button class="date-nav-btn" id="dateNextBtn" aria-label="Next day">›</button>
     </div>
 
-    <div class="xp-card">
-      <div class="xp-top">
-        <span class="xp-level-group">
-          <span class="xp-level" id="levelLabel">Daily Target</span>
-          <button class="target-edit-btn" id="targetEditBtn" type="button" aria-label="Edit daily target">✎</button>
-        </span>
-        <span class="xp-count" id="xpLabel">0 / 150 XP</span>
-      </div>
-      <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
-      <div class="target-edit-row" id="targetEditRow" style="display:none;">
-        <input type="number" id="targetInput" class="task-xp-input" min="1" />
-        <button class="edit-save-btn" id="targetSaveBtn" type="button">Save</button>
-        <button class="edit-cancel-btn" id="targetCancelBtn" type="button">Cancel</button>
-      </div>
-    </div>
-
     <div class="today-progress">
-      <span id="progressLabel">0 of 0 cleared</span>
+      <span id="progressLabel">0 of 0 done</span>
       <div class="bar"><div class="bar-fill" id="todayFill"></div></div>
     </div>
 
-    <div class="today-filter" id="todayFilterRow">
-      <button class="filter-btn active" data-filter="all">All</button>
-      <button class="filter-btn filter-good" data-filter="good">Good</button>
-      <button class="filter-btn filter-bad" data-filter="bad">Bad</button>
+    <div class="cal-select-wrap" id="todayCategoryWrap" style="display:none;">
+      <select id="todayCategorySelect" class="cal-select"></select>
     </div>
 
     <div id="listsWrap"></div>
   </div>
 
   <div id="addView" style="display:none">
-    <div class="create-type-row" id="createTypeRow">
-      <button class="create-btn selected" data-create="simple">Single task</button>
-      <button class="create-btn" data-create="group">Habit group</button>
-      <button class="create-btn" data-create="counter">Counter</button>
-    </div>
-
-    <div id="simpleForm">
-      <div class="add-card">
-        <div class="add-row">
-          <input id="taskInput" type="text" placeholder="What's the discipline?" maxlength="140" />
-        </div>
-        <div class="add-row" style="margin-top:8px;">
-          <input id="taskXpInput" type="number" class="task-xp-input" placeholder="XP amount" step="1" min="1" />
-          <div class="sign-toggle" id="taskSignToggle">
-            <button type="button" class="sign-btn selected" data-sign="1">+</button>
-            <button type="button" class="sign-btn" data-sign="-1">−</button>
-          </div>
-        </div>
-        <input id="taskCategoryInput" type="text" list="categoryOptions" class="group-name-input" placeholder="Category (optional, e.g. Workout)" maxlength="30" style="margin-top:8px;" />
-        <button class="add-btn-wide" id="addBtn" type="button">Add task</button>
-        <div class="form-error" id="taskFormError"></div>
-      </div>
+    <div class="add-card">
+      <input id="taskInput" type="text" class="group-name-input" placeholder="What's the discipline? (e.g. Cold shower)" maxlength="80" />
+      <input id="taskCategoryInput" type="text" list="categoryOptions" class="group-name-input" placeholder="Category (optional, e.g. Morning)" maxlength="30" style="margin-top:8px;" />
+      <button class="add-btn-wide" id="addBtn" type="button">Add discipline</button>
+      <div class="form-error" id="taskFormError"></div>
     </div>
     <datalist id="categoryOptions"></datalist>
-
-    <div id="groupForm" style="display:none">
-      <div class="add-card">
-        <input id="groupNameInput" type="text" class="group-name-input" placeholder="Group name (e.g. Running)" maxlength="60" />
-        <div class="tier-rows" id="tierRows"></div>
-        <button class="add-tier-btn" id="addTierBtn" type="button">+ Add tier</button>
-        <div class="type-row" id="groupSignRow">
-          <button class="type-btn selected" data-sign="1">Good habit group</button>
-          <button class="type-btn" data-sign="-1">Bad habit group</button>
-        </div>
-        <input id="groupCategoryInput" type="text" list="categoryOptions" class="group-name-input" placeholder="Category (optional, e.g. Workout)" maxlength="30" style="margin-top:10px;" />
-        <button class="create-group-btn" id="createGroupBtn" type="button">Create group</button>
-        <div class="form-error" id="groupFormError"></div>
-      </div>
-    </div>
-
-    <div id="counterForm" style="display:none">
-      <div class="add-card">
-        <input id="counterNameInput" type="text" class="group-name-input" placeholder="What are you counting? (e.g. Squats)" maxlength="60" />
-        <div class="counter-sentence-row">
-          <span class="counter-sentence-text">Every</span>
-          <input id="counterRateInput" type="number" class="counter-rate-input" min="1" step="1" value="1" />
-          <input id="counterUnitInput" type="text" class="counter-unit-input" placeholder="e.g. squats, pages" maxlength="24" />
-          <span class="counter-sentence-text">= 1 XP</span>
-        </div>
-        <div class="type-row" id="counterSignRow">
-          <button class="type-btn selected" data-sign="1">Good habit · +XP</button>
-          <button class="type-btn" data-sign="-1">Slip / bad habit · −XP</button>
-        </div>
-        <input id="counterCategoryInput" type="text" list="categoryOptions" class="group-name-input" placeholder="Category (optional, e.g. Workout)" maxlength="30" style="margin-top:10px;" />
-        <button class="create-group-btn" id="createCounterBtn" type="button">Create counter</button>
-        <div class="form-error" id="counterFormError"></div>
-      </div>
-    </div>
 
     <div class="section-label">Your disciplines</div>
     <div id="manageListWrap"></div>
@@ -1427,7 +879,7 @@
         <button class="backup-btn" id="exportBtn" type="button">Copy my data</button>
       </div>
       <div id="restoreList"></div>
-      <textarea id="importText" class="import-text" placeholder="Paste exported data, or a list of habits (JSON), to import"></textarea>
+      <textarea id="importText" class="import-text" placeholder="Paste exported data, or a list of disciplines (JSON), to import"></textarea>
       <button class="add-btn-wide" id="importBtn" type="button">Import</button>
       <div class="form-error" id="importMsg"></div>
     </div>
@@ -1449,6 +901,11 @@
       <div class="cal-grid" id="calGrid"></div>
     </div>
     <div class="cal-summary" id="calSummary"></div>
+    <div class="day-panel" id="calDayPanel">
+      <div class="day-panel-title" id="calDayTitle">Today</div>
+      <div class="day-panel-sub" id="calDaySub"></div>
+      <div id="calDayList"></div>
+    </div>
   </div>
 
   <div id="drinksView" style="display:none">
@@ -1490,8 +947,8 @@
 <div class="celebrate" id="celebrate">
   <div class="celebrate-card">
     <span class="big">🏆</span>
-    <div class="title">All disciplines complete!</div>
-    <div class="sub" id="celebrateSub">Streaks tick up tomorrow.</div>
+    <div class="title">All disciplines done!</div>
+    <div class="sub" id="celebrateSub">Nice work today.</div>
   </div>
 </div>
 
@@ -1508,9 +965,6 @@
   var cloudSynced = false;
 
   // ---- Firebase (optional cross-device sync) ----
-  // Fill these in with your own project's values from the Firebase console
-  // (Project settings → General → Your apps → SDK setup and configuration).
-  // Left as-is, the app just runs on local storage as before.
   var firebaseConfig = {
     apiKey: "AIzaSyAq9_EmffcklWKSYl1k8dr-Hg1FrzMoihc",
     authDomain: "daily-disciplines-b7819.firebaseapp.com",
@@ -1556,38 +1010,22 @@
     }).catch(function(){ /* offline — local storage keeps the app working */ });
   }
 
+  // Brings any saved data (including older versions that had XP, tiers and
+  // counters) into the current shape: every discipline is simply done / not done
+  // on each date.
   function migrateState(parsed) {
-    // One-time backfill for saves created before per-day history existed.
-    // This must only ever run once per save file — otherwise a task left
-    // checked at the end of a day gets its stale "done" flag re-stamped
-    // onto the *new* day's history on every subsequent load, which makes
-    // finished tasks look pre-completed forever (they never actually did
-    // them that day, the flag just kept re-copying itself forward).
-    if (!parsed.historyBackfillDone) {
-      parsed.tasks.forEach(function(t){
-        if (!t.history || typeof t.history !== 'object') t.history = {};
-        if (t.done) t.history[todayStr()] = true;
-      });
-      parsed.historyBackfillDone = true;
-    }
     parsed.tasks.forEach(function(t){
-      if (!t.history || typeof t.history !== 'object') t.history = {};
-      if (typeof t.category !== 'string') t.category = '';
-      // a group tagged "bad" must have every tier negative, even ones
-      // created before this rule existed
-      if (t.type === 'group' && (t.sign || 1) < 0 && Array.isArray(t.tiers)) {
-        t.tiers.forEach(function(tier){ tier.xp = -Math.abs(tier.xp); });
+      var h = {};
+      if (t.history && typeof t.history === 'object') {
+        Object.keys(t.history).forEach(function(k){ if (t.history[k]) h[k] = true; });
       }
+      t.history = h;
+      t.type = 'simple';
+      if (typeof t.text !== 'string') t.text = '';
+      if (typeof t.category !== 'string') t.category = '';
     });
-    if (typeof parsed.updatedAt !== 'number') parsed.updatedAt = Date.now();
-    if (typeof parsed.dailyTarget !== 'number' || parsed.dailyTarget < 1) parsed.dailyTarget = 150;
-    // Seed a target history for saves made before per-day targets existed,
-    // so every existing day keeps behaving exactly as it did before —
-    // only a change made from now on will create a new breakpoint.
-    if (!parsed.targetHistory || typeof parsed.targetHistory !== 'object' || Object.keys(parsed.targetHistory).length === 0) {
-      parsed.targetHistory = { '0000-01-01': parsed.dailyTarget };
-    }
     if (!parsed.drinks || typeof parsed.drinks !== 'object') parsed.drinks = {};
+    if (typeof parsed.updatedAt !== 'number') parsed.updatedAt = Date.now();
     return parsed;
   }
 
@@ -1612,8 +1050,7 @@
 
     state = migrateState(remote);
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-    rolloverIfNewDay();
-    render();
+    refreshAllViews();
   }
 
   var BACKUP_KEY = 'daily_disciplines_backups_v1';
@@ -1653,16 +1090,16 @@
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
 
+  function dateFromKey(key) {
+    var p = key.split('-');
+    return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+  }
+
   function defaultState() {
     return {
-      tasks: [],           // {id, text, size, done, history: {date: true}}
-      totalXp: 0,
-      dailyTarget: 150,
-      targetHistory: { '0000-01-01': 150 }, // date -> target in effect from that date on
-      drinks: {},           // date -> [{id, type, label, qty, cost}]
-      lastActiveDate: todayStr(),
-      celebratedToday: false,
-      historyBackfillDone: true,
+      tasks: [],           // {id, text, category, createdDate, history: {date: true}}
+      drinks: {},          // date -> [{id, type, label, qty, cost}]
+      celebratedDate: '',  // the day the "all done" celebration last played
       updatedAt: Date.now()
     };
   }
@@ -1695,19 +1132,23 @@
     }
   }
 
-  function rolloverIfNewDay() {
-    var today = todayStr();
-    if (state.lastActiveDate === today) return;
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
-    // "done" for the new day reflects whatever history already says (in case it
-    // was edited ahead of time); streaks themselves are always computed live.
-    state.tasks.forEach(function(t){
-      t.done = !!(t.history && t.history[today]);
-    });
+  function escapeHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
 
-    state.lastActiveDate = today;
-    state.celebratedToday = false;
-    save();
+  // ---- Discipline helpers ----
+  function isDoneOn(t, dateKey) {
+    return !!(t.history && t.history[dateKey]);
+  }
+
+  // A discipline only "counts" on a day if it already existed then (or was
+  // ticked that day) — so a new discipline doesn't show as missed for the past.
+  function activeOn(t, dateKey) {
+    return isDoneOn(t, dateKey) || !t.createdDate || dateKey >= t.createdDate;
   }
 
   function computeStreak(task) {
@@ -1723,183 +1164,32 @@
     return streak;
   }
 
-  function dateFromKey(key) {
-    var p = key.split('-');
-    return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
-  }
-
-  function isDoneOnDate(t, date) {
-    return !!(t.history && t.history[date]);
-  }
-
-  function isDoneToday(t) {
-    return isDoneOnDate(t, todayStr());
-  }
-
-  function counterXp(t, qty) {
-    var rate = t.unitsPerXp || 1;
-    var units = Math.floor(qty / rate);
-    return (t.sign || 1) * units;
-  }
-
-  function xpOnDate(t, date) {
-    if (t.type === 'group') {
-      var tierId = t.history && t.history[date];
-      if (!tierId) return 0;
-      var tier = t.tiers.find(function(x){ return x.id === tierId; });
-      return tier ? tier.xp : 0;
-    }
-    if (t.type === 'counter') {
-      var qty = (t.history && t.history[date]) || 0;
-      return counterXp(t, qty);
-    }
-    var val = t.history && t.history[date];
-    return val ? t.size : 0;
-  }
-
-  function dayXpTotal(dateKey) {
-    return state.tasks.reduce(function(sum, t){ return sum + xpOnDate(t, dateKey); }, 0);
-  }
-
-  // Looks up whichever target was in effect on a given date, using the
-  // history of target changes rather than today's live setting — so
-  // changing the target only ever affects days from that point forward,
-  // and past days keep being judged against whatever target applied then.
-  function getTargetForDate(dateKey) {
-    var hist = state.targetHistory;
-    if (!hist || typeof hist !== 'object') return state.dailyTarget || 150;
-    var keys = Object.keys(hist).sort();
-    if (keys.length === 0) return state.dailyTarget || 150;
-    var result = hist[keys[0]];
-    for (var i = 0; i < keys.length; i++) {
-      if (keys[i] <= dateKey) result = hist[keys[i]];
-      else break;
-    }
-    return result;
-  }
-
-  function computeOverallStreak() {
-    var d = new Date();
-    var streak = 0;
-    if (dayXpTotal(todayStr(d)) >= getTargetForDate(todayStr(d))) streak = 1;
-    d.setDate(d.getDate() - 1);
-    while (dayXpTotal(todayStr(d)) >= getTargetForDate(todayStr(d))) {
-      streak++;
-      d.setDate(d.getDate() - 1);
-    }
-    return streak;
+  function setDone(t, dateKey, done) {
+    if (!t.history) t.history = {};
+    if (done) t.history[dateKey] = true; else delete t.history[dateKey];
   }
 
   state = load();
-  rolloverIfNewDay();
   initCloud();
 
   // ---- DOM refs ----
   var dateLabel = document.getElementById('dateLabel');
-  var streakBox = document.getElementById('streakBox');
-  var streakCount = document.getElementById('streakCount');
-  var levelLabel = document.getElementById('levelLabel');
-  var targetEditBtn = document.getElementById('targetEditBtn');
-  var targetEditRow = document.getElementById('targetEditRow');
-  var targetInput = document.getElementById('targetInput');
-  var targetSaveBtn = document.getElementById('targetSaveBtn');
-  var targetCancelBtn = document.getElementById('targetCancelBtn');
-
-  targetEditBtn.addEventListener('click', function(){
-    targetInput.value = getTargetForDate(todayStr());
-    targetEditRow.style.display = 'flex';
-    targetInput.focus();
-  });
-  targetCancelBtn.addEventListener('click', function(){
-    targetEditRow.style.display = 'none';
-  });
-  targetSaveBtn.addEventListener('click', function(){
-    var v = parseInt(targetInput.value, 10);
-    if (!v || v < 1) return;
-    // Record this as a breakpoint starting today, rather than overwriting
-    // a single global number — so past days keep whatever target applied
-    // to them at the time, and only today-onward uses the new value.
-    if (!state.targetHistory || typeof state.targetHistory !== 'object') state.targetHistory = {};
-    state.targetHistory[todayStr()] = v;
-    state.dailyTarget = v; // cached "current" value, kept in sync for convenience
-    targetEditRow.style.display = 'none';
-    save();
-    render();
-  });
-  targetInput.addEventListener('keydown', function(e){
-    if (e.key === 'Enter') targetSaveBtn.click();
-  });
-  var xpLabel = document.getElementById('xpLabel');
-  var xpFill = document.getElementById('xpFill');
+  var headerDone = document.getElementById('headerDone');
   var progressLabel = document.getElementById('progressLabel');
   var todayFill = document.getElementById('todayFill');
   var listsWrap = document.getElementById('listsWrap');
-  var dateNavRow = document.getElementById('dateNavRow');
+  var dateNavLabel = document.getElementById('dateNavLabel');
   var datePrevBtn = document.getElementById('datePrevBtn');
   var dateNextBtn = document.getElementById('dateNextBtn');
-  var dateNavLabel = document.getElementById('dateNavLabel');
-  var viewedDate = todayStr();
-
-  function changeDay(delta) {
-    var d = dateFromKey(viewedDate);
-    d.setDate(d.getDate() + delta);
-    var newKey = todayStr(d);
-    if (newKey > todayStr()) return; // no browsing into the future
-    viewedDate = newKey;
-    render();
-  }
-
-  datePrevBtn.addEventListener('click', function(){ changeDay(-1); });
-  dateNextBtn.addEventListener('click', function(){ changeDay(1); });
-  dateNavLabel.addEventListener('click', function(){
-    if (viewedDate !== todayStr()) { viewedDate = todayStr(); render(); }
-  });
-
-  var todayFilterRow = document.getElementById('todayFilterRow');
-  var todayFilter = 'all';
-  todayFilterRow.addEventListener('click', function(e){
-    var btn = e.target.closest('.filter-btn');
-    if (!btn) return;
-    todayFilter = btn.getAttribute('data-filter');
-    Array.prototype.forEach.call(todayFilterRow.children, function(c){ c.classList.remove('active'); });
-    btn.classList.add('active');
-    render();
-  });
+  var todayCategoryWrap = document.getElementById('todayCategoryWrap');
+  var todayCategorySelect = document.getElementById('todayCategorySelect');
   var taskInput = document.getElementById('taskInput');
-  var taskXpInput = document.getElementById('taskXpInput');
   var taskCategoryInput = document.getElementById('taskCategoryInput');
-  var taskFormError = document.getElementById('taskFormError');
-  var taskSignToggle = document.getElementById('taskSignToggle');
-  var selectedTaskSign = 1;
-  taskSignToggle.addEventListener('click', function(e){
-    var btn = e.target.closest('.sign-btn');
-    if (!btn) return;
-    selectedTaskSign = parseInt(btn.getAttribute('data-sign'), 10);
-    Array.prototype.forEach.call(taskSignToggle.children, function(c){ c.classList.remove('selected'); });
-    btn.classList.add('selected');
-  });
   var addBtn = document.getElementById('addBtn');
-  var createTypeRow = document.getElementById('createTypeRow');
-  var simpleForm = document.getElementById('simpleForm');
-  var groupForm = document.getElementById('groupForm');
-  var groupNameInput = document.getElementById('groupNameInput');
-  var groupCategoryInput = document.getElementById('groupCategoryInput');
-  var tierRowsWrap = document.getElementById('tierRows');
-  var addTierBtn = document.getElementById('addTierBtn');
-  var createGroupBtn = document.getElementById('createGroupBtn');
-  var groupFormError = document.getElementById('groupFormError');
-  var counterForm = document.getElementById('counterForm');
-  var counterNameInput = document.getElementById('counterNameInput');
-  var counterUnitInput = document.getElementById('counterUnitInput');
-  var counterRateInput = document.getElementById('counterRateInput');
-  var counterCategoryInput = document.getElementById('counterCategoryInput');
-  var counterSignRow = document.getElementById('counterSignRow');
-  var groupSignRow = document.getElementById('groupSignRow');
-  var createCounterBtn = document.getElementById('createCounterBtn');
-  var counterFormError = document.getElementById('counterFormError');
+  var taskFormError = document.getElementById('taskFormError');
   var categoryOptionsList = document.getElementById('categoryOptions');
+  var manageListWrap = document.getElementById('manageListWrap');
   var celebrate = document.getElementById('celebrate');
-  var celebrateSub = document.getElementById('celebrateSub');
   var tabTodayBtn = document.getElementById('tabTodayBtn');
   var tabAddBtn = document.getElementById('tabAddBtn');
   var tabCalendarBtn = document.getElementById('tabCalendarBtn');
@@ -1908,13 +1198,16 @@
   var addView = document.getElementById('addView');
   var calendarView = document.getElementById('calendarView');
   var drinksView = document.getElementById('drinksView');
-  var manageListWrap = document.getElementById('manageListWrap');
   var calTaskSelect = document.getElementById('calTaskSelect');
   var calGrid = document.getElementById('calGrid');
   var calMonthLabel = document.getElementById('calMonthLabel');
   var calSummary = document.getElementById('calSummary');
   var calPrev = document.getElementById('calPrev');
   var calNext = document.getElementById('calNext');
+  var calDayPanel = document.getElementById('calDayPanel');
+  var calDayTitle = document.getElementById('calDayTitle');
+  var calDaySub = document.getElementById('calDaySub');
+  var calDayList = document.getElementById('calDayList');
   var drinkCalGrid = document.getElementById('drinkCalGrid');
   var drinkCalMonthLabel = document.getElementById('drinkCalMonthLabel');
   var drinkCalPrev = document.getElementById('drinkCalPrev');
@@ -1930,21 +1223,21 @@
   var drinkFormError = document.getElementById('drinkFormError');
 
   var now = new Date();
-  var calState = { year: now.getFullYear(), month: now.getMonth(), selectedTaskId: null };
+  var viewedDate = todayStr();
+  var lastSeenToday = todayStr();
+  var todayCategory = '';
+  var editingTaskId = null;
+  var calState = { year: now.getFullYear(), month: now.getMonth(), taskId: '', selectedDate: todayStr() };
   var drinkCalState = { year: now.getFullYear(), month: now.getMonth(), selectedDate: todayStr() };
   var DRINK_TYPES = { pint: 'Pint', bottle: 'Bottle', can: 'Can', shot: 'Shot', other: 'Other' };
 
+  // ---- Tabs ----
   var TABS = {
-    today: { btn: null, view: null },
-    add: { btn: null, view: null },
-    calendar: { btn: null, view: null },
-    drinks: { btn: null, view: null }
+    today: { btn: tabTodayBtn, view: todayView },
+    add: { btn: tabAddBtn, view: addView },
+    calendar: { btn: tabCalendarBtn, view: calendarView },
+    drinks: { btn: tabDrinksBtn, view: drinksView }
   };
-  TABS.today.btn = tabTodayBtn; TABS.today.view = todayView;
-  TABS.add.btn = tabAddBtn; TABS.add.view = addView;
-  TABS.calendar.btn = tabCalendarBtn; TABS.calendar.view = calendarView;
-  TABS.drinks.btn = tabDrinksBtn; TABS.drinks.view = drinksView;
-
   tabTodayBtn.addEventListener('click', function(){ switchTab('today'); });
   tabAddBtn.addEventListener('click', function(){ switchTab('add'); });
   tabCalendarBtn.addEventListener('click', function(){ switchTab('calendar'); });
@@ -1956,15 +1249,331 @@
       TABS[key].btn.classList.toggle('active', active);
       TABS[key].view.style.display = active ? '' : 'none';
     });
+    if (tab === 'today') render();
     if (tab === 'add') renderManageList();
     if (tab === 'calendar') renderCalendar();
     if (tab === 'drinks') renderDrinksTab();
   }
 
+  function refreshAllViews() {
+    render();
+    renderManageList();
+    renderCalendar();
+    renderDrinksTab();
+  }
+
+  // If the app stays open past midnight, roll the view over to the new day.
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState !== 'visible') return;
+    var t = todayStr();
+    if (t === lastSeenToday) return;
+    if (viewedDate === lastSeenToday) viewedDate = t;
+    lastSeenToday = t;
+    refreshAllViews();
+  });
+
+  // ---- Categories ----
+  function allCategories() {
+    var cats = {};
+    state.tasks.forEach(function(t){ if (t.category) cats[t.category] = true; });
+    return Object.keys(cats).sort(function(a, b){ return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
+  }
+
+  function refreshCategoryOptions() {
+    var cats = allCategories();
+    categoryOptionsList.innerHTML = '';
+    cats.forEach(function(c){
+      var opt = document.createElement('option');
+      opt.value = c;
+      categoryOptionsList.appendChild(opt);
+    });
+    if (todayCategory && cats.indexOf(todayCategory) === -1) todayCategory = '';
+    todayCategoryWrap.style.display = cats.length ? '' : 'none';
+    todayCategorySelect.innerHTML = '';
+    var allOpt = document.createElement('option');
+    allOpt.value = '';
+    allOpt.textContent = 'All categories';
+    todayCategorySelect.appendChild(allOpt);
+    cats.forEach(function(c){
+      var o = document.createElement('option');
+      o.value = c;
+      o.textContent = c;
+      if (c === todayCategory) o.selected = true;
+      todayCategorySelect.appendChild(o);
+    });
+  }
+
+  todayCategorySelect.addEventListener('change', function(){
+    todayCategory = todayCategorySelect.value;
+    render();
+  });
+
+  // ---- Today tab ----
+  function changeDay(delta) {
+    var d = dateFromKey(viewedDate);
+    d.setDate(d.getDate() + delta);
+    var newKey = todayStr(d);
+    if (newKey > todayStr()) return; // no browsing into the future
+    viewedDate = newKey;
+    render();
+  }
+  datePrevBtn.addEventListener('click', function(){ changeDay(-1); });
+  dateNextBtn.addEventListener('click', function(){ changeDay(1); });
+  dateNavLabel.addEventListener('click', function(){
+    if (viewedDate !== todayStr()) { viewedDate = todayStr(); render(); }
+  });
+
+  function render() {
+    var today = todayStr();
+    var isToday = viewedDate === today;
+    dateLabel.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+    dateNavLabel.textContent = isToday ? 'Today' : dateFromKey(viewedDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    dateNavLabel.classList.toggle('is-past', !isToday);
+    dateNextBtn.disabled = isToday;
+
+    refreshCategoryOptions();
+
+    var todays = state.tasks.filter(function(t){ return activeOn(t, today); });
+    var todayDone = todays.filter(function(t){ return isDoneOn(t, today); }).length;
+    headerDone.textContent = todayDone + '/' + todays.length;
+
+    var visible = state.tasks.filter(function(t){ return activeOn(t, viewedDate); });
+    var doneN = visible.filter(function(t){ return isDoneOn(t, viewedDate); }).length;
+    progressLabel.textContent = visible.length ? (doneN + ' of ' + visible.length + ' done') : 'Nothing to do yet';
+    todayFill.style.width = visible.length ? ((doneN / visible.length) * 100) + '%' : '0%';
+
+    var shown = todayCategory ? visible.filter(function(t){ return t.category === todayCategory; }) : visible;
+
+    listsWrap.innerHTML = '';
+    if (state.tasks.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = '<span class="glyph">✨</span>No disciplines yet.<br>Add your first one in the Add tab.';
+      listsWrap.appendChild(empty);
+      return;
+    }
+    if (shown.length === 0) {
+      var none = document.createElement('div');
+      none.className = 'empty';
+      none.textContent = 'Nothing to show for this category.';
+      listsWrap.appendChild(none);
+      return;
+    }
+    var ul = document.createElement('ul');
+    ul.className = 'task-list';
+    shown.forEach(function(t){
+      var done = isDoneOn(t, viewedDate);
+      var li = document.createElement('li');
+      li.className = 'task' + (done ? ' done' : '');
+
+      var text = document.createElement('div');
+      text.className = 'task-text';
+      text.textContent = t.text;
+
+      var meta = document.createElement('div');
+      meta.className = 'task-meta';
+      var streak = computeStreak(t);
+      meta.innerHTML = (t.category ? '<span class="category-badge">' + escapeHtml(t.category) + '</span>' : '') +
+        (streak > 0 ? '<span class="task-streak">🔥' + streak + '</span>' : '');
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'done-btn';
+      btn.textContent = done ? '✓ Done' : 'Done';
+
+      li.appendChild(text);
+      li.appendChild(meta);
+      li.appendChild(btn);
+      li.addEventListener('click', function(){ onToggle(t.id); });
+      ul.appendChild(li);
+    });
+    listsWrap.appendChild(ul);
+  }
+
+  function onToggle(id) {
+    var t = state.tasks.find(function(x){ return x.id === id; });
+    if (!t) return;
+    var nowDone = !isDoneOn(t, viewedDate);
+    setDone(t, viewedDate, nowDone);
+    save();
+    render();
+    if (nowDone && viewedDate === todayStr()) maybeCelebrate();
+  }
+
+  function maybeCelebrate() {
+    var today = todayStr();
+    var todays = state.tasks.filter(function(t){ return activeOn(t, today); });
+    if (todays.length === 0 || state.celebratedDate === today) return;
+    var allDone = todays.every(function(t){ return isDoneOn(t, today); });
+    if (!allDone) return;
+    state.celebratedDate = today;
+    save();
+    launchCelebration();
+  }
+
+  function launchCelebration() {
+    var colors = ['#FF6B4E', '#C7F464', '#9B8CFF', '#F1EFE8'];
+    var old = celebrate.querySelectorAll('.confetti-bit');
+    old.forEach(function(o){ o.remove(); });
+    for (var i = 0; i < 26; i++) {
+      var bit = document.createElement('div');
+      bit.className = 'confetti-bit';
+      var angle = Math.random() * Math.PI * 2;
+      var dist = 90 + Math.random() * 140;
+      var dx = Math.cos(angle) * dist;
+      var dy = Math.sin(angle) * dist - 40;
+      bit.style.background = colors[i % colors.length];
+      bit.style.animation = 'none';
+      bit.animate([
+        { transform: 'translate(-50%,-50%) rotate(0deg)', opacity: 1 },
+        { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + (Math.random()*400-200) + 'deg)', opacity: 0 }
+      ], { duration: 1000 + Math.random()*500, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
+      celebrate.appendChild(bit);
+    }
+    celebrate.classList.remove('show');
+    void celebrate.offsetWidth;
+    celebrate.classList.add('show');
+  }
+
+  // ---- Add tab ----
+  function addTask() {
+    taskFormError.classList.remove('show');
+    var text = taskInput.value.trim();
+    if (!text) {
+      taskFormError.textContent = 'Give it a name first.';
+      taskFormError.classList.add('show');
+      taskInput.focus();
+      return;
+    }
+    state.tasks.push({
+      id: uid(), type: 'simple', text: text,
+      category: taskCategoryInput.value.trim(),
+      createdDate: todayStr(), history: {}
+    });
+    taskInput.value = '';
+    taskCategoryInput.value = '';
+    save();
+    render();
+    renderManageList();
+    taskInput.focus();
+  }
+  addBtn.addEventListener('click', addTask);
+  taskInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') addTask(); });
+  taskCategoryInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') addTask(); });
+
+  function onDelete(id) {
+    var t = state.tasks.find(function(x){ return x.id === id; });
+    if (!t) return;
+    if (!window.confirm('Delete "' + t.text + '" and its history? This can\'t be undone.')) return;
+    state.tasks = state.tasks.filter(function(x){ return x.id !== id; });
+    save();
+    render();
+    renderManageList();
+  }
+
+  function renderManageList() {
+    refreshCategoryOptions();
+    manageListWrap.innerHTML = '';
+    if (state.tasks.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = '<span class="glyph">✏️</span>Nothing added yet.<br>Use the form above to create your first discipline.';
+      manageListWrap.appendChild(empty);
+      return;
+    }
+    var ul = document.createElement('ul');
+    ul.className = 'task-list';
+    state.tasks.forEach(function(t){
+      var li = document.createElement('li');
+
+      if (editingTaskId === t.id) {
+        li.className = 'task editing';
+        li.style.cursor = 'default';
+        var wrap = document.createElement('div');
+        wrap.className = 'edit-wrap';
+
+        var nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'group-name-input';
+        nameInput.maxLength = 80;
+        nameInput.value = t.text;
+
+        var catInput = document.createElement('input');
+        catInput.type = 'text';
+        catInput.className = 'group-name-input';
+        catInput.setAttribute('list', 'categoryOptions');
+        catInput.placeholder = 'Category (optional)';
+        catInput.maxLength = 30;
+        catInput.value = t.category || '';
+
+        var btnRow = document.createElement('div');
+        btnRow.className = 'edit-row';
+        var saveBtn = document.createElement('button');
+        saveBtn.type = 'button';
+        saveBtn.className = 'edit-save-btn';
+        saveBtn.textContent = 'Save';
+        var cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'edit-cancel-btn';
+        cancelBtn.textContent = 'Cancel';
+        saveBtn.addEventListener('click', function(){
+          var newName = nameInput.value.trim();
+          if (!newName) return;
+          t.text = newName;
+          t.category = catInput.value.trim();
+          editingTaskId = null;
+          save(); render(); renderManageList();
+        });
+        cancelBtn.addEventListener('click', function(){ editingTaskId = null; renderManageList(); });
+        btnRow.appendChild(saveBtn);
+        btnRow.appendChild(cancelBtn);
+
+        wrap.appendChild(nameInput);
+        wrap.appendChild(catInput);
+        wrap.appendChild(btnRow);
+        li.appendChild(wrap);
+        ul.appendChild(li);
+        return;
+      }
+
+      li.className = 'task';
+      li.style.cursor = 'default';
+      var text = document.createElement('div');
+      text.className = 'task-text';
+      text.textContent = t.text;
+
+      var meta = document.createElement('div');
+      meta.className = 'task-meta';
+      var streak = computeStreak(t);
+      meta.innerHTML = (t.category ? '<span class="category-badge">' + escapeHtml(t.category) + '</span>' : '') +
+        (streak > 0 ? '<span class="task-streak">🔥' + streak + '</span>' : '');
+
+      var editBtn = document.createElement('button');
+      editBtn.className = 'task-edit-btn';
+      editBtn.setAttribute('aria-label', 'Edit discipline');
+      editBtn.textContent = '✎';
+      editBtn.addEventListener('click', function(){ editingTaskId = t.id; renderManageList(); });
+
+      var del = document.createElement('button');
+      del.className = 'task-del';
+      del.setAttribute('aria-label', 'Delete discipline');
+      del.textContent = '×';
+      del.addEventListener('click', function(){ onDelete(t.id); });
+
+      li.appendChild(text);
+      li.appendChild(meta);
+      li.appendChild(editBtn);
+      li.appendChild(del);
+      ul.appendChild(li);
+    });
+    manageListWrap.appendChild(ul);
+  }
+
+  // ---- Calendar tab ----
   calPrev.addEventListener('click', function(){ changeMonth(-1); });
   calNext.addEventListener('click', function(){ changeMonth(1); });
   calTaskSelect.addEventListener('change', function(){
-    calState.selectedTaskId = calTaskSelect.value;
+    calState.taskId = calTaskSelect.value;
     renderCalendar();
   });
 
@@ -1976,33 +1585,26 @@
   }
 
   function renderCalendar() {
-    if (state.tasks.length === 0) {
-      calTaskSelect.innerHTML = '';
-      calGrid.innerHTML = '';
-      calMonthLabel.textContent = new Date(calState.year, calState.month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-      calSummary.textContent = 'Add a discipline in the Add tab to start tracking it here.';
-      return;
-    }
-    if (!calState.selectedTaskId || !state.tasks.some(function(t){ return t.id === calState.selectedTaskId; })) {
-      calState.selectedTaskId = state.tasks[0].id;
-    }
+    if (calState.taskId && !state.tasks.some(function(t){ return t.id === calState.taskId; })) calState.taskId = '';
+
     calTaskSelect.innerHTML = '';
+    var allOpt = document.createElement('option');
+    allOpt.value = '';
+    allOpt.textContent = 'All disciplines';
+    calTaskSelect.appendChild(allOpt);
     state.tasks.forEach(function(t){
       var opt = document.createElement('option');
       opt.value = t.id;
-      opt.textContent = t.text + (t.type === 'group' ? ' (group)' : t.type === 'counter' ? ' (counter)' : '');
-      if (t.id === calState.selectedTaskId) opt.selected = true;
+      opt.textContent = t.text;
+      if (t.id === calState.taskId) opt.selected = true;
       calTaskSelect.appendChild(opt);
     });
 
-    var task = state.tasks.find(function(t){ return t.id === calState.selectedTaskId; });
-    var history = (task && task.history) || {};
-    var isGroup = task.type === 'group';
-    var isCounter = task.type === 'counter';
+    var task = calState.taskId ? state.tasks.find(function(t){ return t.id === calState.taskId; }) : null;
+    var monthDate = new Date(calState.year, calState.month, 1);
+    calMonthLabel.textContent = monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
-    calMonthLabel.textContent = new Date(calState.year, calState.month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-
-    var firstWeekday = (new Date(calState.year, calState.month, 1).getDay() + 6) % 7;
+    var firstWeekday = (monthDate.getDay() + 6) % 7; // weeks start on Monday
     var daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
     var todayKey = todayStr();
 
@@ -2012,84 +1614,123 @@
       pad.className = 'cal-day pad';
       calGrid.appendChild(pad);
     }
-    var completions = 0;
-    var tierCounts = {};
-    if (isGroup) task.tiers.forEach(function(t){ tierCounts[t.id] = 0; });
-    var monthQty = 0;
-    var monthXp = 0;
 
+    var monthCompletions = 0;
     for (var day = 1; day <= daysInMonth; day++) {
-      var dKey = calState.year + '-' + String(calState.month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-      var cell = document.createElement('div');
-      var cellVal = history[dKey];
-      var isDone = !!cellVal;
+      var dKey = calState.year + '-' + String(calState.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
       var isFuture = dKey > todayKey;
-      if (isDone) {
-        completions++;
-        if (isGroup && tierCounts.hasOwnProperty(cellVal)) tierCounts[cellVal]++;
-        if (isCounter) { monthQty += cellVal; monthXp += counterXp(task, cellVal); }
+      var cell = document.createElement('div');
+      var cls = 'cal-day';
+      var badgeNum = 0;
+
+      if (task) {
+        var done = isDoneOn(task, dKey);
+        if (done) { cls += ' done'; monthCompletions++; }
+      } else {
+        var active = state.tasks.filter(function(t){ return activeOn(t, dKey); });
+        var doneCount = active.filter(function(t){ return isDoneOn(t, dKey); }).length;
+        monthCompletions += doneCount;
+        badgeNum = doneCount;
+        if (active.length > 0 && doneCount === active.length) cls += ' done';
+        else if (doneCount > 0) cls += ' partial';
+        if (dKey === calState.selectedDate) cls += ' selected';
       }
-      cell.className = 'cal-day' + (isDone ? ' done' : '') + (dKey === todayKey ? ' today' : '') + (isFuture ? ' future' : '');
+      if (dKey === todayKey) cls += ' today';
+      if (isFuture) cls += ' future';
+      cell.className = cls;
       cell.textContent = day;
-      if (!isFuture && !isCounter) {
-        cell.addEventListener('click', function(clickedKey, clickedTask){
-          return function(){ onCalendarDayToggle(clickedTask, clickedKey); };
-        }(dKey, task));
+      if (badgeNum > 0) {
+        var badge = document.createElement('span');
+        badge.className = 'cal-day-badge';
+        badge.textContent = badgeNum;
+        cell.appendChild(badge);
+      }
+      if (!isFuture) {
+        cell.addEventListener('click', function(key){
+          return function(){
+            if (task) {
+              setDone(task, key, !isDoneOn(task, key));
+              save();
+              render();
+            } else {
+              calState.selectedDate = key;
+            }
+            renderCalendar();
+          };
+        }(dKey));
       }
       calGrid.appendChild(cell);
     }
 
-    var summaryHtml = '<b>' + completions + '</b> ' +
-      ((isGroup || isCounter) ? ('day' + (completions === 1 ? '' : 's') + ' logged') : ('completion' + (completions === 1 ? '' : 's'))) +
-      ' for "' + escapeHtml(task.text) + '" this month';
-
-    if (isGroup) {
-      var breakdown = task.tiers.map(function(t){
-        return '<span class="tier-count-chip">' + escapeHtml(t.label) + ': ' + tierCounts[t.id] + '</span>';
-      }).join('');
-      summaryHtml += '<div class="tier-count-row">' + breakdown + '</div>';
+    if (task) {
+      var streak = computeStreak(task);
+      calSummary.innerHTML = '<b>' + monthCompletions + '</b> time' + (monthCompletions === 1 ? '' : 's') +
+        ' this month · 🔥 ' + streak + '-day streak' +
+        '<br><span class="cal-hint">Tap any day to mark it done or undone.</span>';
+      calDayPanel.style.display = 'none';
+    } else {
+      calSummary.innerHTML = state.tasks.length === 0
+        ? 'Add a discipline in the Add tab to start tracking it here.'
+        : '<b>' + monthCompletions + '</b> completion' + (monthCompletions === 1 ? '' : 's') + ' this month' +
+          '<br><span class="cal-hint">Tap a day to see what you completed.</span>';
+      calDayPanel.style.display = '';
+      renderDayPanel();
     }
-
-    if (isCounter) {
-      summaryHtml += '<div class="tier-count-row">' +
-        '<span class="tier-count-chip">' + monthQty + ' ' + escapeHtml(task.unit) + '</span>' +
-        '<span class="tier-count-chip">' + (monthXp > 0 ? '+' : '') + monthXp + ' XP</span>' +
-        '</div>';
-    }
-
-    summaryHtml += '<br><span class="cal-hint">' +
-      (isGroup ? 'Tap a day to cycle through tiers.' : isCounter ? 'Edit counts from the Today tab — calendar is read-only for counters.' : 'Tap any day to mark it done or undone.') +
-      '</span>';
-
-    calSummary.innerHTML = summaryHtml;
   }
 
-  function onCalendarDayToggle(task, dateKey) {
-    if (dateKey > todayStr()) return; // no marking the future
-    if (!task.history) task.history = {};
+  function renderDayPanel() {
+    var dKey = calState.selectedDate;
+    var active = state.tasks.filter(function(t){ return activeOn(t, dKey); });
+    var doneList = active.filter(function(t){ return isDoneOn(t, dKey); });
+    var notDone = active.filter(function(t){ return !isDoneOn(t, dKey); });
 
-    if (task.type === 'group') {
-      var ids = task.tiers.map(function(t){ return t.id; });
-      var currentId = task.history[dateKey] || null;
-      var idx = currentId ? ids.indexOf(currentId) : -1;
-      var nextIdx = idx + 1;
-      var newTierId = nextIdx < ids.length ? ids[nextIdx] : null;
-      if (newTierId) task.history[dateKey] = newTierId; else delete task.history[dateKey];
-    } else {
-      var wasDone = !!task.history[dateKey];
-      if (wasDone) {
-        delete task.history[dateKey];
-      } else {
-        task.history[dateKey] = true;
-      }
-      if (dateKey === todayStr()) {
-        task.done = !wasDone;
-      }
+    calDayTitle.textContent = (dKey === todayStr() ? 'Today — ' : '') +
+      dateFromKey(dKey).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+    calDaySub.textContent = active.length
+      ? doneList.length + ' of ' + active.length + ' disciplines completed'
+      : 'No disciplines yet';
+
+    calDayList.innerHTML = '';
+    function addGroup(label, list, done) {
+      if (!list.length) return;
+      var lab = document.createElement('div');
+      lab.className = 'day-group-label';
+      lab.textContent = label;
+      calDayList.appendChild(lab);
+      list.forEach(function(t){
+        var row = document.createElement('div');
+        row.className = 'day-row' + (done ? ' done' : '');
+        var mark = document.createElement('span');
+        mark.className = 'mark';
+        mark.textContent = done ? '✓' : '';
+        var name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = t.text;
+        row.appendChild(mark);
+        row.appendChild(name);
+        if (t.category) {
+          var cat = document.createElement('span');
+          cat.className = 'category-badge';
+          cat.textContent = t.category;
+          row.appendChild(cat);
+        }
+        row.addEventListener('click', function(){
+          setDone(t, dKey, !done);
+          save();
+          render();
+          renderCalendar();
+        });
+        calDayList.appendChild(row);
+      });
     }
-
-    save();
-    render();
-    renderCalendar();
+    addGroup('Completed', doneList, true);
+    addGroup('Not completed', notDone, false);
+    if (active.length) {
+      var hint = document.createElement('div');
+      hint.className = 'day-hint';
+      hint.textContent = 'Tap a discipline to change it.';
+      calDayList.appendChild(hint);
+    }
   }
 
   // ---- Drinks tab ----
@@ -2265,837 +1906,6 @@
     }
   }
 
-  function escapeHtml(str) {
-    var d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-  }
-
-  function refreshCategoryOptions() {
-    var cats = {};
-    state.tasks.forEach(function(t){ if (t.category) cats[t.category] = true; });
-    var names = Object.keys(cats).sort(function(a,b){ return a.localeCompare(b); });
-    categoryOptionsList.innerHTML = names.map(function(c){
-      return '<option value="' + escapeHtml(c) + '"></option>';
-    }).join('');
-  }
-
-  createTypeRow.addEventListener('click', function(e){
-    var btn = e.target.closest('.create-btn');
-    if (!btn) return;
-    var mode = btn.getAttribute('data-create');
-    Array.prototype.forEach.call(createTypeRow.children, function(c){ c.classList.remove('selected'); });
-    btn.classList.add('selected');
-    simpleForm.style.display = mode === 'simple' ? '' : 'none';
-    groupForm.style.display = mode === 'group' ? '' : 'none';
-    counterForm.style.display = mode === 'counter' ? '' : 'none';
-  });
-
-  function addTierRow(container, label, xp) {
-    var row = document.createElement('div');
-    row.className = 'tier-row';
-    var labelVal = label ? escapeHtml(label) : '';
-    var xpVal = (xp === undefined || xp === null) ? '' : xp;
-    row.innerHTML =
-      '<input type="text" class="tier-label-input" placeholder="Tier label" maxlength="40" value="' + labelVal + '">' +
-      '<input type="number" class="tier-xp-input" placeholder="XP" step="1" value="' + xpVal + '">' +
-      '<button class="tier-remove-btn" type="button" aria-label="Remove tier">×</button>';
-    row.querySelector('.tier-remove-btn').addEventListener('click', function(){
-      if (container.children.length > 2) row.remove();
-    });
-    container.appendChild(row);
-  }
-
-  function resetTierRows() {
-    tierRowsWrap.innerHTML = '';
-    addTierRow(tierRowsWrap, '', '');
-    addTierRow(tierRowsWrap, '', '');
-  }
-  resetTierRows();
-
-  addTierBtn.addEventListener('click', function(){ addTierRow(tierRowsWrap, '', ''); });
-
-  var selectedGroupSign = 1;
-  groupSignRow.addEventListener('click', function(e){
-    var btn = e.target.closest('.type-btn');
-    if (!btn) return;
-    selectedGroupSign = parseInt(btn.getAttribute('data-sign'), 10);
-    Array.prototype.forEach.call(groupSignRow.children, function(c){ c.classList.remove('selected'); });
-    btn.classList.add('selected');
-  });
-
-  createGroupBtn.addEventListener('click', function(){
-    groupFormError.classList.remove('show');
-    var name = groupNameInput.value.trim();
-    if (!name) {
-      groupFormError.textContent = 'Give the group a name first.';
-      groupFormError.classList.add('show');
-      groupNameInput.focus();
-      return;
-    }
-    var rows = Array.prototype.slice.call(tierRowsWrap.querySelectorAll('.tier-row'));
-    var tiers = [];
-    rows.forEach(function(row){
-      var label = row.querySelector('.tier-label-input').value.trim();
-      var xpRaw = row.querySelector('.tier-xp-input').value.trim();
-      if (!label || xpRaw === '') return;
-      var xp = parseInt(xpRaw, 10);
-      if (isNaN(xp)) return;
-      tiers.push({ id: uid(), label: label, xp: xp });
-    });
-    if (tiers.length < 2) {
-      groupFormError.textContent = 'Add at least two tiers (e.g. "No run" and a distance) with a label and XP each.';
-      groupFormError.classList.add('show');
-      return;
-    }
-    if (selectedGroupSign < 0) {
-      tiers = tiers.map(function(t){ return { id: t.id, label: t.label, xp: -Math.abs(t.xp) }; });
-    }
-    var groupCategory = groupCategoryInput.value.trim();
-    state.tasks.unshift({ id: uid(), type: 'group', text: name, tiers: tiers, sign: selectedGroupSign, category: groupCategory, history: {} });
-    state.celebratedToday = false;
-    groupNameInput.value = '';
-    groupCategoryInput.value = '';
-    resetTierRows();
-    selectedGroupSign = 1;
-    Array.prototype.forEach.call(groupSignRow.children, function(c){ c.classList.remove('selected'); });
-    groupSignRow.children[0].classList.add('selected');
-    save();
-    render();
-    renderManageList();
-  });
-
-  var selectedCounterSign = 1;
-  counterSignRow.addEventListener('click', function(e){
-    var btn = e.target.closest('.type-btn');
-    if (!btn) return;
-    selectedCounterSign = parseInt(btn.getAttribute('data-sign'), 10);
-    Array.prototype.forEach.call(counterSignRow.children, function(c){ c.classList.remove('selected'); });
-    btn.classList.add('selected');
-  });
-
-  createCounterBtn.addEventListener('click', function(){
-    counterFormError.classList.remove('show');
-    var name = counterNameInput.value.trim();
-    var unit = counterUnitInput.value.trim();
-    var rate = parseInt(counterRateInput.value.trim(), 10);
-    if (!name) {
-      counterFormError.textContent = 'Give it a name first.';
-      counterFormError.classList.add('show');
-      counterNameInput.focus();
-      return;
-    }
-    if (!unit) {
-      counterFormError.textContent = 'Add a unit name (e.g. pushups, pages).';
-      counterFormError.classList.add('show');
-      counterUnitInput.focus();
-      return;
-    }
-    if (!rate || rate < 1) rate = 1;
-    var counterCategory = counterCategoryInput.value.trim();
-    state.tasks.unshift({ id: uid(), type: 'counter', text: name, unit: unit, unitsPerXp: rate, sign: selectedCounterSign, category: counterCategory, history: {} });
-    state.celebratedToday = false;
-    counterNameInput.value = '';
-    counterUnitInput.value = '';
-    counterRateInput.value = '1';
-    counterCategoryInput.value = '';
-    selectedCounterSign = 1;
-    Array.prototype.forEach.call(counterSignRow.children, function(c){ c.classList.remove('selected'); });
-    counterSignRow.children[0].classList.add('selected');
-    save();
-    render();
-    renderManageList();
-  });
-
-  dateLabel.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
-
-  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
-
-  function render() {
-    var isToday = viewedDate === todayStr();
-    dateNavLabel.textContent = isToday ? 'Today' : dateFromKey(viewedDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-    dateNavLabel.classList.toggle('is-past', !isToday);
-    dateNextBtn.disabled = isToday;
-
-    var dayStreak = computeOverallStreak();
-    streakCount.textContent = dayStreak;
-    streakBox.classList.toggle('active', dayStreak > 0);
-
-    var viewedTarget = getTargetForDate(viewedDate);
-    var viewedTotal = dayXpTotal(viewedDate);
-    var pct = Math.max(0, Math.min(100, (viewedTotal / viewedTarget) * 100));
-    xpLabel.textContent = viewedTotal + ' / ' + viewedTarget + ' XP';
-    xpFill.style.width = pct + '%';
-
-    var groups = state.tasks.filter(function(t){ return t.type === 'group'; });
-    var counters = state.tasks.filter(function(t){ return t.type === 'counter'; });
-    var simpleTasks = state.tasks.filter(function(t){ return t.type !== 'group' && t.type !== 'counter'; });
-
-    function matchesFilter(t){
-      if (todayFilter === 'all') return true;
-      var positive = (t.type === 'counter' || t.type === 'group') ? ((t.sign || 1) > 0) : (t.size > 0);
-      return todayFilter === 'good' ? positive : !positive;
-    }
-
-    var filteredTasks = simpleTasks.filter(matchesFilter);
-    var filteredCounters = counters.filter(matchesFilter);
-    var filteredGroups = groups.filter(matchesFilter);
-
-    var countBase = filteredTasks.concat(filteredCounters).concat(filteredGroups);
-    var total = countBase.length;
-    var done = countBase.filter(function(t){ return isDoneOnDate(t, viewedDate); }).length;
-    var verb = todayFilter === 'bad' ? 'logged' : 'cleared';
-    progressLabel.textContent = total === 0 ? 'No disciplines yet' : (done + ' of ' + total + ' ' + verb);
-    todayFill.style.width = total === 0 ? '0%' : (done/total*100) + '%';
-
-    listsWrap.innerHTML = '';
-
-    if (state.tasks.length === 0) {
-      var empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.innerHTML = '<span class="glyph">🎯</span>No disciplines yet.<br>Add one you want to build daily — or just today.';
-      listsWrap.appendChild(empty);
-      return;
-    }
-
-    if (filteredGroups.length) {
-      listsWrap.appendChild(sectionLabel('Habit groups'));
-      var gWrap = document.createElement('div');
-      gWrap.className = 'group-list';
-      filteredGroups.forEach(function(g){ gWrap.appendChild(groupCard(g)); });
-      listsWrap.appendChild(gWrap);
-    }
-
-    if (filteredCounters.length) {
-      listsWrap.appendChild(sectionLabel('Counters'));
-      var cWrap = document.createElement('div');
-      cWrap.className = 'group-list';
-      filteredCounters.forEach(function(c){ cWrap.appendChild(counterCard(c)); });
-      listsWrap.appendChild(cWrap);
-    }
-
-    if (filteredTasks.length === 0) {
-      var emptyFiltered = document.createElement('div');
-      emptyFiltered.className = 'empty';
-      emptyFiltered.innerHTML = todayFilter === 'good'
-        ? '<span class="glyph">🌱</span>No good single tasks yet.'
-        : todayFilter === 'bad'
-          ? '<span class="glyph">🚫</span>No slip tasks tracked yet.'
-          : '<span class="glyph">✅</span>No single tasks yet.';
-      listsWrap.appendChild(emptyFiltered);
-      return;
-    }
-
-    var sortedFiltered = filteredTasks.slice().sort(function(a, b){ return b.size - a.size; });
-    var active = sortedFiltered.filter(function(t){ return !isDoneOnDate(t, viewedDate); });
-    var cleared = sortedFiltered.filter(function(t){ return isDoneOnDate(t, viewedDate); });
-
-    if (active.length) {
-      listsWrap.appendChild(sectionLabel(isToday ? 'Today' : 'Active'));
-      appendByCategory(active);
-    }
-    if (cleared.length) {
-      listsWrap.appendChild(sectionLabel('Cleared'));
-      appendByCategory(cleared);
-    }
-  }
-
-  function groupByCategory(tasks) {
-    var buckets = {};
-    var order = [];
-    tasks.forEach(function(t){
-      var cat = (t.category || '').trim() || 'Uncategorized';
-      if (!buckets[cat]) { buckets[cat] = []; order.push(cat); }
-      buckets[cat].push(t);
-    });
-    order.sort(function(a, b){
-      if (a === 'Uncategorized') return 1;
-      if (b === 'Uncategorized') return -1;
-      return a.localeCompare(b);
-    });
-    return order.map(function(cat){ return { category: cat, items: buckets[cat] }; });
-  }
-
-  function appendByCategory(tasks) {
-    groupByCategory(tasks).forEach(function(bucket){
-      if (bucket.category !== 'Uncategorized') {
-        var catLabel = document.createElement('div');
-        catLabel.className = 'category-label';
-        catLabel.textContent = bucket.category;
-        listsWrap.appendChild(catLabel);
-      }
-      listsWrap.appendChild(taskList(bucket.items));
-    });
-  }
-
-  function sectionLabel(text) {
-    var d = document.createElement('div');
-    d.className = 'section-label';
-    d.textContent = text;
-    return d;
-  }
-
-  function sizeIcon(t) {
-    return svgCheck();
-  }
-
-  function svgCheck() {
-    return '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L6 12L13.5 3.5" stroke="#12132A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  }
-
-  function taskList(items) {
-    var ul = document.createElement('ul');
-    ul.className = 'task-list';
-    items.forEach(function(t){
-      var done = isDoneOnDate(t, viewedDate);
-      var li = document.createElement('li');
-      li.className = 'task' + (done ? ' done' : '') + (t.size < 0 ? ' negative' : '');
-      li.setAttribute('data-size', t.size);
-      li.setAttribute('data-id', t.id);
-
-      var check = document.createElement('button');
-      check.className = 'check';
-      check.setAttribute('aria-label', done ? 'Mark not done' : 'Mark done');
-      check.innerHTML = svgCheck();
-      check.addEventListener('click', function(ev){ onToggle(t.id, ev); });
-
-      var text = document.createElement('div');
-      text.className = 'task-text';
-      text.textContent = t.text;
-
-      var meta = document.createElement('div');
-      meta.className = 'task-meta';
-      var streakVal = computeStreak(t);
-      var streakHtml = streakVal > 0
-        ? '<span class="task-streak">🔥' + streakVal + '</span>'
-        : '';
-      meta.innerHTML = streakHtml + '<span class="task-xp">' + (t.size > 0 ? '+' : '') + t.size + 'xp</span>';
-
-      li.appendChild(check);
-      li.appendChild(text);
-      li.appendChild(meta);
-      ul.appendChild(li);
-    });
-    return ul;
-  }
-
-  function groupCard(g) {
-    var card = document.createElement('div');
-    card.className = 'group-card' + ((g.sign || 1) < 0 ? ' negative' : '');
-
-    var header = document.createElement('div');
-    header.className = 'group-header';
-
-    var name = document.createElement('div');
-    name.className = 'group-name';
-    name.textContent = g.text;
-
-    var meta = document.createElement('div');
-    meta.className = 'group-meta';
-    var streakVal = computeStreak(g);
-    var streakHtml = streakVal > 0 ? '<span class="task-streak">🔥' + streakVal + '</span>' : '';
-    var todayTierId = g.history && g.history[viewedDate];
-    var todayTier = todayTierId ? g.tiers.find(function(t){ return t.id === todayTierId; }) : null;
-    var xpHtml = '<span class="task-xp' + (todayTier && todayTier.xp < 0 ? ' neg' : '') + '">' +
-      (todayTier ? ((todayTier.xp > 0 ? '+' : '') + todayTier.xp + 'xp') : '—') + '</span>';
-    meta.innerHTML = streakHtml + xpHtml;
-
-    header.appendChild(name);
-    header.appendChild(meta);
-
-    var chipRow = document.createElement('div');
-    chipRow.className = 'tier-chip-row';
-    g.tiers.forEach(function(tier){
-      var chip = document.createElement('button');
-      var isSelected = todayTierId === tier.id;
-      chip.className = 'tier-chip' + (isSelected ? ' selected' : '') + (tier.xp < 0 ? ' negative' : ' positive');
-      chip.textContent = tier.label + ' · ' + (tier.xp > 0 ? '+' : '') + tier.xp + 'xp';
-      chip.addEventListener('click', function(ev){ onGroupTierToggle(g, tier.id, ev); });
-      chipRow.appendChild(chip);
-    });
-
-    card.appendChild(header);
-    card.appendChild(chipRow);
-    return card;
-  }
-
-  function onGroupTierToggle(group, tierId, ev) {
-    var date = viewedDate;
-    if (!group.history) group.history = {};
-    var prevTierId = group.history[date];
-    var deselecting = prevTierId === tierId;
-    var newTier = deselecting ? null : group.tiers.find(function(t){ return t.id === tierId; });
-    if (deselecting) delete group.history[date];
-    else group.history[date] = tierId;
-    save();
-    if (newTier && ev && ev.currentTarget) floatXp(newTier.xp, ev.currentTarget);
-    render();
-    if (newTier && date === todayStr()) maybeCelebrate();
-  }
-
-  function counterCard(t) {
-    var card = document.createElement('div');
-    card.className = 'group-card';
-
-    var header = document.createElement('div');
-    header.className = 'group-header';
-
-    var name = document.createElement('div');
-    name.className = 'group-name';
-    name.textContent = t.text;
-
-    var meta = document.createElement('div');
-    meta.className = 'group-meta';
-    var streakVal = computeStreak(t);
-    var streakHtml = streakVal > 0 ? '<span class="task-streak">🔥' + streakVal + '</span>' : '';
-    var todayXp = xpOnDate(t, viewedDate);
-    var xpHtml = '<span class="task-xp' + (todayXp < 0 ? ' neg' : '') + '">' + (todayXp > 0 ? '+' : '') + todayXp + 'xp</span>';
-    meta.innerHTML = streakHtml + xpHtml;
-
-    header.appendChild(name);
-    header.appendChild(meta);
-
-    var todayQty = (t.history && t.history[viewedDate]) || 0;
-
-    var row = document.createElement('div');
-    row.className = 'counter-row';
-
-    var minusBtn = document.createElement('button');
-    minusBtn.className = 'counter-btn';
-    minusBtn.type = 'button';
-    minusBtn.textContent = '−';
-    minusBtn.setAttribute('aria-label', 'Decrease ' + t.unit);
-    minusBtn.addEventListener('click', function(){ onCounterChange(t, todayQty - 1); });
-
-    var input = document.createElement('input');
-    input.type = 'number';
-    input.className = 'counter-input';
-    input.min = '0';
-    input.value = todayQty;
-    input.addEventListener('change', function(){
-      var v = parseInt(input.value, 10);
-      onCounterChange(t, isNaN(v) ? 0 : v);
-    });
-
-    var plusBtn = document.createElement('button');
-    plusBtn.className = 'counter-btn';
-    plusBtn.type = 'button';
-    plusBtn.textContent = '+';
-    plusBtn.setAttribute('aria-label', 'Increase ' + t.unit);
-    plusBtn.addEventListener('click', function(){ onCounterChange(t, todayQty + 1); });
-
-    row.appendChild(minusBtn);
-    row.appendChild(input);
-    row.appendChild(plusBtn);
-
-    var quickRow = document.createElement('div');
-    quickRow.className = 'counter-quick-row';
-    [5, 10].forEach(function(step){
-      var qb = document.createElement('button');
-      qb.type = 'button';
-      qb.className = 'counter-quick-btn';
-      qb.textContent = '+' + step;
-      qb.addEventListener('click', function(){ onCounterChange(t, todayQty + step); });
-      quickRow.appendChild(qb);
-    });
-
-    card.appendChild(header);
-    card.appendChild(row);
-    card.appendChild(quickRow);
-    return card;
-  }
-
-  function onCounterChange(t, newQuantity) {
-    newQuantity = Math.max(0, Math.floor(newQuantity) || 0);
-    var date = viewedDate;
-    if (!t.history) t.history = {};
-    var oldQuantity = t.history[date] || 0;
-    var oldXp = counterXp(t, oldQuantity);
-    var newXp = counterXp(t, newQuantity);
-    if (newQuantity > 0) t.history[date] = newQuantity; else delete t.history[date];
-    save();
-    render();
-    if (newXp > oldXp && date === todayStr()) maybeCelebrate();
-  }
-
-  var editingTaskId = null;
-
-  function buildEditShell(t) {
-    var li = document.createElement('li');
-    li.className = 'task editing';
-    var editWrap = document.createElement('div');
-    editWrap.className = 'edit-wrap';
-
-    var nameInput = document.createElement('input');
-    nameInput.type = 'text';
-    nameInput.className = 'group-name-input';
-    nameInput.style.margin = '0';
-    nameInput.value = t.text;
-    nameInput.maxLength = 140;
-    editWrap.appendChild(nameInput);
-
-    return { li: li, editWrap: editWrap, nameInput: nameInput };
-  }
-
-  function buildSignToggle(initialSign) {
-    var sign = initialSign < 0 ? -1 : 1;
-    var toggle = document.createElement('div');
-    toggle.className = 'sign-toggle';
-    [1, -1].forEach(function(signVal){
-      var sBtn = document.createElement('button');
-      sBtn.type = 'button';
-      sBtn.className = 'sign-btn' + (signVal === sign ? ' selected' : '');
-      sBtn.setAttribute('data-sign', signVal);
-      sBtn.textContent = signVal === 1 ? '+' : '−';
-      sBtn.addEventListener('click', function(){
-        toggle.dataset.value = signVal;
-        Array.prototype.forEach.call(toggle.children, function(c){ c.classList.remove('selected'); });
-        sBtn.classList.add('selected');
-      });
-      toggle.appendChild(sBtn);
-    });
-    toggle.dataset.value = sign;
-    return toggle;
-  }
-
-  function buildEditButtons(onSave, onCancel) {
-    var saveBtn = document.createElement('button');
-    saveBtn.type = 'button';
-    saveBtn.className = 'edit-save-btn';
-    saveBtn.textContent = 'Save';
-    saveBtn.addEventListener('click', onSave);
-
-    var cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.className = 'edit-cancel-btn';
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.addEventListener('click', onCancel);
-
-    var row = document.createElement('div');
-    row.className = 'edit-row';
-    row.appendChild(saveBtn);
-    row.appendChild(cancelBtn);
-    return row;
-  }
-
-  function buildCategoryInput(t) {
-    var catInput = document.createElement('input');
-    catInput.type = 'text';
-    catInput.setAttribute('list', 'categoryOptions');
-    catInput.className = 'counter-unit-input';
-    catInput.placeholder = 'Category';
-    catInput.value = t.category || '';
-    return catInput;
-  }
-
-  function renderManageList() {
-    refreshCategoryOptions();
-    manageListWrap.innerHTML = '';
-    if (state.tasks.length === 0) {
-      var empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.innerHTML = '<span class="glyph">✏️</span>Nothing added yet.<br>Use the form above to create your first discipline.';
-      manageListWrap.appendChild(empty);
-      return;
-    }
-    var ul = document.createElement('ul');
-    ul.className = 'task-list';
-    state.tasks.forEach(function(t){
-      var isGroup = t.type === 'group';
-      var isCounter = t.type === 'counter';
-      var isSimple = !isGroup && !isCounter;
-
-      if (editingTaskId === t.id) {
-        var shell = buildEditShell(t);
-        var li = shell.li, editWrap = shell.editWrap, nameInput = shell.nameInput;
-
-        if (isSimple) {
-          var editRow = document.createElement('div');
-          editRow.className = 'edit-row';
-
-          var xpInput = document.createElement('input');
-          xpInput.type = 'number';
-          xpInput.className = 'task-xp-input';
-          xpInput.min = '1';
-          xpInput.value = Math.abs(t.size);
-
-          var signToggle = buildSignToggle(t.size);
-          var catInput = buildCategoryInput(t);
-
-          editRow.appendChild(xpInput);
-          editRow.appendChild(signToggle);
-          editRow.appendChild(catInput);
-          editWrap.appendChild(editRow);
-          editWrap.appendChild(buildEditButtons(function(){
-            var newName = nameInput.value.trim();
-            var mag = Math.abs(parseInt(xpInput.value, 10));
-            if (!newName || isNaN(mag) || mag === 0) return;
-            t.text = newName;
-            t.size = mag * parseInt(signToggle.dataset.value, 10);
-            t.category = catInput.value.trim();
-            editingTaskId = null;
-            save(); render(); renderManageList();
-          }, function(){ editingTaskId = null; renderManageList(); }));
-
-        } else if (isCounter) {
-          var sentenceRow = document.createElement('div');
-          sentenceRow.className = 'counter-sentence-row';
-          var everyText = document.createElement('span');
-          everyText.className = 'counter-sentence-text';
-          everyText.textContent = 'Every';
-          var rateInput = document.createElement('input');
-          rateInput.type = 'number';
-          rateInput.className = 'counter-rate-input';
-          rateInput.min = '1';
-          rateInput.value = t.unitsPerXp || 1;
-          var unitInput = document.createElement('input');
-          unitInput.type = 'text';
-          unitInput.className = 'counter-unit-input';
-          unitInput.maxLength = 24;
-          unitInput.value = t.unit;
-          var eqText = document.createElement('span');
-          eqText.className = 'counter-sentence-text';
-          eqText.textContent = '= 1 XP';
-          sentenceRow.appendChild(everyText);
-          sentenceRow.appendChild(rateInput);
-          sentenceRow.appendChild(unitInput);
-          sentenceRow.appendChild(eqText);
-
-          var counterSign = buildSignToggle(t.sign || 1);
-          var counterCat = buildCategoryInput(t);
-
-          editWrap.appendChild(sentenceRow);
-          editWrap.appendChild(counterSign);
-          editWrap.appendChild(counterCat);
-          editWrap.appendChild(buildEditButtons(function(){
-            var newName = nameInput.value.trim();
-            var newUnit = unitInput.value.trim();
-            var newRate = parseInt(rateInput.value, 10);
-            if (!newName || !newUnit || !newRate || newRate < 1) return;
-            t.text = newName;
-            t.unit = newUnit;
-            t.unitsPerXp = newRate;
-            t.sign = parseInt(counterSign.dataset.value, 10);
-            t.category = counterCat.value.trim();
-            editingTaskId = null;
-            save(); render(); renderManageList();
-          }, function(){ editingTaskId = null; renderManageList(); }));
-
-        } else if (isGroup) {
-          var editTierRows = document.createElement('div');
-          editTierRows.className = 'tier-rows';
-          t.tiers.forEach(function(tier){ addTierRow(editTierRows, tier.label, tier.xp); });
-
-          var addTierEditBtn = document.createElement('button');
-          addTierEditBtn.type = 'button';
-          addTierEditBtn.className = 'add-tier-btn';
-          addTierEditBtn.textContent = '+ Add tier';
-          addTierEditBtn.addEventListener('click', function(){ addTierRow(editTierRows, '', ''); });
-
-          var groupSign = buildSignToggle(t.sign || 1);
-          var groupCat = buildCategoryInput(t);
-          var groupEditError = document.createElement('div');
-          groupEditError.className = 'form-error';
-
-          editWrap.appendChild(editTierRows);
-          editWrap.appendChild(addTierEditBtn);
-          editWrap.appendChild(groupSign);
-          editWrap.appendChild(groupCat);
-          editWrap.appendChild(buildEditButtons(function(){
-            var newName = nameInput.value.trim();
-            if (!newName) return;
-            var rows = Array.prototype.slice.call(editTierRows.querySelectorAll('.tier-row'));
-            var newTiers = [];
-            rows.forEach(function(row){
-              var label = row.querySelector('.tier-label-input').value.trim();
-              var xpRaw = row.querySelector('.tier-xp-input').value.trim();
-              if (!label || xpRaw === '') return;
-              var xp = parseInt(xpRaw, 10);
-              if (isNaN(xp)) return;
-              newTiers.push({ id: uid(), label: label, xp: xp });
-            });
-            if (newTiers.length < 2) {
-              groupEditError.textContent = 'Add at least two tiers.';
-              groupEditError.classList.add('show');
-              return;
-            }
-            var newSign = parseInt(groupSign.dataset.value, 10);
-            if (newSign < 0) {
-              newTiers = newTiers.map(function(tr){ return { id: tr.id, label: tr.label, xp: -Math.abs(tr.xp) }; });
-            }
-            t.text = newName;
-            t.tiers = newTiers;
-            t.sign = newSign;
-            t.category = groupCat.value.trim();
-            editingTaskId = null;
-            save(); render(); renderManageList();
-          }, function(){ editingTaskId = null; renderManageList(); }));
-          editWrap.appendChild(groupEditError);
-        }
-
-        li.appendChild(editWrap);
-        ul.appendChild(li);
-        return;
-      }
-
-      var li = document.createElement('li');
-      var isNegative = (isCounter || isGroup) ? (t.sign || 1) < 0 : t.size < 0;
-      li.className = 'task' + (isNegative ? ' negative' : '');
-
-      var dot = document.createElement('span');
-      dot.className = 'manage-dot' + (isGroup ? ' group-dot' : '') + (isCounter ? ' counter-dot' : '');
-
-      var text = document.createElement('div');
-      text.className = 'task-text';
-      text.textContent = t.text;
-
-      var meta = document.createElement('div');
-      meta.className = 'task-meta';
-      var catBadge = t.category ? '<span class="category-badge">' + escapeHtml(t.category) + '</span>' : '';
-      if (isGroup) {
-        meta.innerHTML = catBadge + '<span class="task-xp">' + t.tiers.length + ' tiers</span>';
-      } else if (isCounter) {
-        meta.innerHTML = catBadge + '<span class="task-xp">' + (t.unitsPerXp || 1) + ' ' + escapeHtml(t.unit) + ' = ' + (t.sign > 0 ? '+' : '−') + '1xp</span>';
-      } else {
-        meta.innerHTML = catBadge + '<span class="task-xp">' + (t.size > 0 ? '+' : '') + t.size + 'xp</span>';
-      }
-
-      li.appendChild(dot);
-      li.appendChild(text);
-      li.appendChild(meta);
-
-      var editBtn = document.createElement('button');
-      editBtn.className = 'task-edit-btn';
-      editBtn.setAttribute('aria-label', 'Edit discipline');
-      editBtn.textContent = '✎';
-      editBtn.addEventListener('click', function(){ editingTaskId = t.id; renderManageList(); });
-      li.appendChild(editBtn);
-
-      var del = document.createElement('button');
-      del.className = 'task-del';
-      del.setAttribute('aria-label', 'Delete discipline');
-      del.textContent = '×';
-      del.addEventListener('click', function(){ onDelete(t.id); });
-      li.appendChild(del);
-
-      ul.appendChild(li);
-    });
-    manageListWrap.appendChild(ul);
-  }
-
-  function floatXp(amount, originEl) {
-    var rect = originEl.getBoundingClientRect();
-    var f = document.createElement('div');
-    f.className = 'float-xp';
-    f.textContent = (amount > 0 ? '+' : '') + amount + ' XP';
-    f.style.left = (rect.left + rect.width/2 - 20) + 'px';
-    f.style.top = (rect.top - 6) + 'px';
-    document.body.appendChild(f);
-    setTimeout(function(){ f.remove(); }, 1000);
-  }
-
-  function maybeCelebrate() {
-    if (state.tasks.length === 0) return;
-    var totalToday = dayXpTotal(todayStr());
-    var todayTarget = getTargetForDate(todayStr());
-    if (totalToday >= todayTarget && !state.celebratedToday) {
-      state.celebratedToday = true;
-      save();
-      celebrateSub.textContent = 'You hit ' + todayTarget + ' XP today. Streak +1 tomorrow.';
-      launchCelebration();
-    }
-  }
-
-  function launchCelebration() {
-    var colors = ['#FF6B4E', '#C7F464', '#9B8CFF', '#F1EFE8'];
-    // clear old bits
-    var old = celebrate.querySelectorAll('.confetti-bit');
-    old.forEach(function(o){ o.remove(); });
-    for (var i = 0; i < 26; i++) {
-      var bit = document.createElement('div');
-      bit.className = 'confetti-bit';
-      var angle = Math.random() * Math.PI * 2;
-      var dist = 90 + Math.random() * 140;
-      var dx = Math.cos(angle) * dist;
-      var dy = Math.sin(angle) * dist - 40;
-      bit.style.background = colors[i % colors.length];
-      bit.style.animation = 'none';
-      bit.animate([
-        { transform: 'translate(-50%,-50%) rotate(0deg)', opacity: 1 },
-        { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + (Math.random()*400-200) + 'deg)', opacity: 0 }
-      ], { duration: 1000 + Math.random()*500, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
-      celebrate.appendChild(bit);
-    }
-    celebrate.classList.remove('show');
-    void celebrate.offsetWidth;
-    celebrate.classList.add('show');
-  }
-
-  function onToggle(id, ev) {
-    var t = state.tasks.find(function(x){ return x.id === id; });
-    if (!t) return;
-    var date = viewedDate;
-    if (!t.history) t.history = {};
-    var wasDone = !!t.history[date];
-    var nowDone = !wasDone;
-    if (nowDone) { t.history[date] = true; } else { delete t.history[date]; }
-    if (date === todayStr()) t.done = nowDone; // keep the convenience flag in sync for today
-    save();
-    if (nowDone) {
-      var checkEl = ev.currentTarget;
-      floatXp(t.size, checkEl);
-    }
-    render();
-    if (nowDone && date === todayStr()) maybeCelebrate();
-  }
-
-  function onDelete(id) {
-    state.tasks = state.tasks.filter(function(x){ return x.id !== id; });
-    save();
-    render();
-    renderManageList();
-  }
-
-  function addTask() {
-    taskFormError.classList.remove('show');
-    var text = taskInput.value.trim();
-    var xpRaw = taskXpInput.value.trim();
-    var magnitude = Math.abs(parseInt(xpRaw, 10));
-    if (!text) {
-      taskFormError.textContent = 'Give it a name first.';
-      taskFormError.classList.add('show');
-      taskInput.focus();
-      return;
-    }
-    if (xpRaw === '' || isNaN(magnitude) || magnitude === 0) {
-      taskFormError.textContent = 'Enter an XP amount, then pick + or −.';
-      taskFormError.classList.add('show');
-      taskXpInput.focus();
-      return;
-    }
-    var xp = magnitude * selectedTaskSign;
-    var category = taskCategoryInput.value.trim();
-    state.tasks.unshift({ id: uid(), type: 'simple', text: text, size: xp, category: category, done: false, history: {} });
-    state.celebratedToday = false;
-    taskInput.value = '';
-    taskXpInput.value = '';
-    taskCategoryInput.value = '';
-    selectedTaskSign = 1;
-    Array.prototype.forEach.call(taskSignToggle.children, function(c){ c.classList.remove('selected'); });
-    taskSignToggle.children[0].classList.add('selected');
-    save();
-    render();
-    renderManageList();
-    taskInput.focus();
-  }
-
-  addBtn.addEventListener('click', addTask);
-  taskInput.addEventListener('keydown', function(e){
-    if (e.key === 'Enter') addTask();
-  });
-  taskXpInput.addEventListener('keydown', function(e){
-    if (e.key === 'Enter') addTask();
-  });
 
   // ---- Backup & restore / import ----
   var restoreBtn = document.getElementById('restoreBtn');
@@ -3110,20 +1920,12 @@
     importMsg.classList.add('show');
   }
 
-  function refreshAllViews() {
-    render();
-    renderManageList();
-    renderCalendar();
-    renderDrinksTab();
-  }
-
   function restoreFromSnapshot(snapshot) {
     if (!window.confirm('Replace everything currently in the app with this backup?')) return;
     backupLocalState(state);
     state = migrateState(JSON.parse(JSON.stringify(snapshot)));
     localWasFresh = false; // an explicit restore is allowed to sync up
     save();
-    rolloverIfNewDay();
     refreshAllViews();
     restoreList.innerHTML = '';
     showImportMsg('Restored.');
@@ -3133,7 +1935,7 @@
     restoreList.innerHTML = '';
     if (items.length === 0) {
       var none = document.createElement('div');
-      none.className = 'cal-hint';
+      none.className = 'day-hint';
       none.textContent = 'No backups found yet. A cloud backup is saved automatically once a day from now on.';
       restoreList.appendChild(none);
       return;
@@ -3143,7 +1945,7 @@
       row.className = 'drink-entry';
       var text = document.createElement('div');
       text.className = 'drink-entry-text';
-      text.textContent = item.label + ' · ' + item.state.tasks.length + ' habits';
+      text.textContent = item.label + ' · ' + item.state.tasks.length + ' disciplines';
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'backup-btn small';
@@ -3157,7 +1959,7 @@
 
   restoreBtn.addEventListener('click', function(){
     importMsg.classList.remove('show');
-    restoreList.innerHTML = '<div class="cal-hint">Looking for backups…</div>';
+    restoreList.innerHTML = '<div class="day-hint">Looking for backups…</div>';
     var cloudItems = [];
     var phoneItems = [];
     try {
@@ -3205,37 +2007,19 @@
     }
   });
 
+  // Accepts {text, category} (anything else in the item is ignored, so older
+  // exports with XP / tiers / counters still import as plain disciplines).
   function normalizeImportedTask(t) {
     if (!t || typeof t.text !== 'string' || !t.text.trim()) return null;
-    var out = {
-      id: uid(),
-      type: 'simple',
-      text: t.text.trim(),
-      category: typeof t.category === 'string' ? t.category : '',
-      history: (t.history && typeof t.history === 'object') ? t.history : {}
-    };
-    if (t.type === 'group') {
-      if (!Array.isArray(t.tiers) || t.tiers.length < 2) return null;
-      var sign = (t.sign || 1) < 0 ? -1 : 1;
-      out.type = 'group';
-      out.sign = sign;
-      out.tiers = t.tiers.map(function(tier){
-        var xp = parseInt(tier.xp, 10);
-        if (isNaN(xp)) xp = 0;
-        return { id: tier.id || uid(), label: String(tier.label || ''), xp: sign < 0 ? -Math.abs(xp) : xp };
-      });
-    } else if (t.type === 'counter') {
-      out.type = 'counter';
-      out.unit = typeof t.unit === 'string' ? t.unit : '';
-      out.unitsPerXp = Math.max(1, parseInt(t.unitsPerXp, 10) || 1);
-      out.sign = (t.sign || 1) < 0 ? -1 : 1;
-    } else {
-      var size = parseInt(t.size, 10);
-      if (isNaN(size) || size === 0) return null;
-      out.size = size;
-      out.done = false;
+    var h = {};
+    if (t.history && typeof t.history === 'object') {
+      Object.keys(t.history).forEach(function(k){ if (t.history[k]) h[k] = true; });
     }
-    return out;
+    return {
+      id: uid(), type: 'simple', text: t.text.trim(),
+      category: typeof t.category === 'string' ? t.category : '',
+      createdDate: todayStr(), history: h
+    };
   }
 
   importBtn.addEventListener('click', function(){
@@ -3251,17 +2035,17 @@
         var t = normalizeImportedTask(raw);
         if (t) { state.tasks.push(t); added++; }
       });
-      if (!added) { showImportMsg('No valid habits found in that list.'); return; }
+      if (!added) { showImportMsg('No valid disciplines found in that list.'); return; }
       localWasFresh = false;
       save();
       importText.value = '';
       refreshAllViews();
-      showImportMsg('Added ' + added + ' habits.');
+      showImportMsg('Added ' + added + ' disciplines.');
     } else if (data && Array.isArray(data.tasks)) {
       restoreFromSnapshot(data);
       importText.value = '';
     } else {
-      showImportMsg('Expected either a full export or a list of habits.');
+      showImportMsg('Expected either a full export or a list of disciplines.');
     }
   });
 
