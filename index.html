@@ -818,6 +818,60 @@
   .day-row .name { flex: 1; min-width: 0; font-size: 14px; word-break: break-word; }
   .day-row:not(.done) .name { color: var(--text-dim); }
   .day-hint { font-size: 11.5px; color: var(--text-dim); opacity: 0.8; margin-top: 8px; text-align: center; }
+
+  /* Amount tracking */
+  .track-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 10px 2px 0;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .track-row input { width: 18px; height: 18px; accent-color: var(--lime); flex-shrink: 0; }
+  #taskUnitInput { margin-top: 8px; }
+  .edit-wrap .track-row { margin: 2px 2px 0; }
+  .task.tracked, .day-row.tracked { flex-wrap: wrap; }
+  .amount-row {
+    flex: 1 0 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+  }
+  .amount-input {
+    width: 96px;
+    min-width: 0;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: var(--font-head);
+    font-size: 16px;
+    padding: 8px 10px;
+    text-align: center;
+    outline: none;
+  }
+  .amount-input:focus { border-color: var(--violet); }
+  .amount-unit { color: var(--text-dim); font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .amount-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 72px;
+    margin: 14px 2px 0;
+    padding: 8px 6px 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  .amount-bar-col { flex: 1; height: 100%; display: flex; align-items: flex-end; min-width: 0; }
+  .amount-bar { width: 100%; background: var(--lime); border-radius: 3px 3px 0 0; min-height: 0; }
+  .amount-bar-col.today .amount-bar { background: var(--coral); }
+  .amount-bars-axis { display: flex; justify-content: space-between; margin: 4px 8px 0; font-size: 10.5px; color: var(--text-dim); }
+  .cal-hint-line { margin-top: 10px; font-size: 12px; color: var(--text-dim); }
 </style>
 </head>
 <body>
@@ -864,6 +918,8 @@
     <div class="add-card">
       <input id="taskInput" type="text" class="group-name-input" placeholder="What's the discipline? (e.g. Cold shower)" maxlength="80" />
       <input id="taskCategoryInput" type="text" list="categoryOptions" class="group-name-input" placeholder="Category (optional, e.g. Morning)" maxlength="30" style="margin-top:8px;" />
+      <label class="track-row"><input type="checkbox" id="taskTrackCheck" /><span>Track an amount (reps, km…)</span></label>
+      <input id="taskUnitInput" type="text" class="group-name-input" placeholder="Unit (e.g. reps, km)" maxlength="16" style="display:none;" />
       <button class="add-btn-wide" id="addBtn" type="button">Add discipline</button>
       <div class="form-error" id="taskFormError"></div>
     </div>
@@ -1015,12 +1071,21 @@
   // on each date.
   function migrateState(parsed) {
     parsed.tasks.forEach(function(t){
+      // history[date] is `true` (done) or, for disciplines that track an amount,
+      // a positive number (e.g. 40 pushups).
       var h = {};
       if (t.history && typeof t.history === 'object') {
-        Object.keys(t.history).forEach(function(k){ if (t.history[k]) h[k] = true; });
+        Object.keys(t.history).forEach(function(k){
+          var v = t.history[k];
+          if (typeof v === 'number' && v > 0) h[k] = v;
+          else if (v) h[k] = true;
+        });
       }
       t.history = h;
+      if (t.type === 'counter' && typeof t.track !== 'boolean') t.track = true; // old counters keep their amounts
       t.type = 'simple';
+      if (typeof t.track !== 'boolean') t.track = false;
+      if (typeof t.unit !== 'string') t.unit = '';
       if (typeof t.text !== 'string') t.text = '';
       if (typeof t.category !== 'string') t.category = '';
     });
@@ -1169,6 +1234,65 @@
     if (done) t.history[dateKey] = true; else delete t.history[dateKey];
   }
 
+  // For disciplines that track an amount: a positive number means done that day.
+  function amountOn(t, dateKey) {
+    var v = t.history && t.history[dateKey];
+    return typeof v === 'number' ? v : 0;
+  }
+
+  function setAmount(t, dateKey, n) {
+    if (!t.history) t.history = {};
+    if (n > 0) t.history[dateKey] = n; else delete t.history[dateKey];
+  }
+
+  function parseAmount(str) {
+    var n = parseFloat(String(str).replace(',', '.'));
+    if (isNaN(n) || n <= 0) return 0;
+    return Math.round(n * 100) / 100;
+  }
+
+  function fmtAmount(n) {
+    return (Math.round(n * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+
+  // Builds the "[ number ] unit [Log]" control used on the Today tab and the calendar.
+  // onSave(amount) is called with 0 to clear the day.
+  function buildAmountControl(t, dateKey, onSave) {
+    var wrap = document.createElement('div');
+    wrap.className = 'amount-row';
+    wrap.addEventListener('click', function(e){ e.stopPropagation(); });
+
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.inputMode = 'decimal';
+    input.min = '0';
+    input.step = 'any';
+    input.className = 'amount-input';
+    input.placeholder = '0';
+    var cur = amountOn(t, dateKey);
+    input.value = cur > 0 ? cur : '';
+
+    var unit = document.createElement('span');
+    unit.className = 'amount-unit';
+    unit.textContent = t.unit || '';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'done-btn';
+    var logged = isDoneOn(t, dateKey);
+    btn.textContent = logged ? '✓ Saved' : 'Log';
+
+    function commit() { onSave(parseAmount(input.value)); }
+    btn.addEventListener('click', commit);
+    input.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); commit(); } });
+    input.addEventListener('change', commit);
+
+    wrap.appendChild(input);
+    wrap.appendChild(unit);
+    wrap.appendChild(btn);
+    return wrap;
+  }
+
   state = load();
   initCloud();
 
@@ -1187,6 +1311,8 @@
   var taskCategoryInput = document.getElementById('taskCategoryInput');
   var addBtn = document.getElementById('addBtn');
   var taskFormError = document.getElementById('taskFormError');
+  var taskTrackCheck = document.getElementById('taskTrackCheck');
+  var taskUnitInput = document.getElementById('taskUnitInput');
   var categoryOptionsList = document.getElementById('categoryOptions');
   var manageListWrap = document.getElementById('manageListWrap');
   var celebrate = document.getElementById('celebrate');
@@ -1376,15 +1502,27 @@
       meta.innerHTML = (t.category ? '<span class="category-badge">' + escapeHtml(t.category) + '</span>' : '') +
         (streak > 0 ? '<span class="task-streak">🔥' + streak + '</span>' : '');
 
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'done-btn';
-      btn.textContent = done ? '✓ Done' : 'Done';
-
       li.appendChild(text);
       li.appendChild(meta);
-      li.appendChild(btn);
-      li.addEventListener('click', function(){ onToggle(t.id); });
+
+      if (t.track) {
+        // Amount-tracked discipline: type how many, then Log it.
+        li.className += ' tracked';
+        li.style.cursor = 'default';
+        li.appendChild(buildAmountControl(t, viewedDate, function(n){
+          setAmount(t, viewedDate, n);
+          save();
+          render();
+          if (n > 0 && viewedDate === todayStr()) maybeCelebrate();
+        }));
+      } else {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'done-btn';
+        btn.textContent = done ? '✓ Done' : 'Done';
+        li.appendChild(btn);
+        li.addEventListener('click', function(){ onToggle(t.id); });
+      }
       ul.appendChild(li);
     });
     listsWrap.appendChild(ul);
@@ -1448,16 +1586,25 @@
     state.tasks.push({
       id: uid(), type: 'simple', text: text,
       category: taskCategoryInput.value.trim(),
+      track: taskTrackCheck.checked,
+      unit: taskTrackCheck.checked ? taskUnitInput.value.trim() : '',
       createdDate: todayStr(), history: {}
     });
     taskInput.value = '';
     taskCategoryInput.value = '';
+    taskTrackCheck.checked = false;
+    taskUnitInput.value = '';
+    taskUnitInput.style.display = 'none';
     save();
     render();
     renderManageList();
     taskInput.focus();
   }
   addBtn.addEventListener('click', addTask);
+  taskTrackCheck.addEventListener('change', function(){
+    taskUnitInput.style.display = taskTrackCheck.checked ? '' : 'none';
+    if (taskTrackCheck.checked) taskUnitInput.focus();
+  });
   taskInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') addTask(); });
   taskCategoryInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') addTask(); });
 
@@ -1506,6 +1653,27 @@
         catInput.maxLength = 30;
         catInput.value = t.category || '';
 
+        var trackLabel = document.createElement('label');
+        trackLabel.className = 'track-row';
+        var trackCheck = document.createElement('input');
+        trackCheck.type = 'checkbox';
+        trackCheck.checked = !!t.track;
+        var trackText = document.createElement('span');
+        trackText.textContent = 'Track an amount (reps, km…)';
+        trackLabel.appendChild(trackCheck);
+        trackLabel.appendChild(trackText);
+
+        var unitInput = document.createElement('input');
+        unitInput.type = 'text';
+        unitInput.className = 'group-name-input';
+        unitInput.placeholder = 'Unit (e.g. reps, km)';
+        unitInput.maxLength = 16;
+        unitInput.value = t.unit || '';
+        unitInput.style.display = t.track ? '' : 'none';
+        trackCheck.addEventListener('change', function(){
+          unitInput.style.display = trackCheck.checked ? '' : 'none';
+        });
+
         var btnRow = document.createElement('div');
         btnRow.className = 'edit-row';
         var saveBtn = document.createElement('button');
@@ -1521,6 +1689,8 @@
           if (!newName) return;
           t.text = newName;
           t.category = catInput.value.trim();
+          t.track = trackCheck.checked;
+          t.unit = t.track ? unitInput.value.trim() : '';
           editingTaskId = null;
           save(); render(); renderManageList();
         });
@@ -1530,6 +1700,8 @@
 
         wrap.appendChild(nameInput);
         wrap.appendChild(catInput);
+        wrap.appendChild(trackLabel);
+        wrap.appendChild(unitInput);
         wrap.appendChild(btnRow);
         li.appendChild(wrap);
         ul.appendChild(li);
@@ -1546,6 +1718,7 @@
       meta.className = 'task-meta';
       var streak = computeStreak(t);
       meta.innerHTML = (t.category ? '<span class="category-badge">' + escapeHtml(t.category) + '</span>' : '') +
+        (t.track ? '<span class="category-badge">' + escapeHtml(t.unit || 'amount') + '</span>' : '') +
         (streak > 0 ? '<span class="task-streak">🔥' + streak + '</span>' : '');
 
       var editBtn = document.createElement('button');
@@ -1615,22 +1788,40 @@
       calGrid.appendChild(pad);
     }
 
+    var tracked = !!(task && task.track);
     var monthCompletions = 0;
+    var monthTotal = 0;
+    var daysLogged = 0;
+    var bestDay = 0;
+    var dailyAmounts = [];
+
+    function shortNum(n) {
+      if (n >= 10000) return Math.round(n / 1000) + 'k';
+      if (n >= 1000) return (Math.round(n / 100) / 10) + 'k';
+      return fmtAmount(n);
+    }
+
     for (var day = 1; day <= daysInMonth; day++) {
       var dKey = calState.year + '-' + String(calState.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
       var isFuture = dKey > todayKey;
       var cell = document.createElement('div');
       var cls = 'cal-day';
-      var badgeNum = 0;
+      var badgeText = '';
 
       if (task) {
         var done = isDoneOn(task, dKey);
         if (done) { cls += ' done'; monthCompletions++; }
+        if (tracked) {
+          var amt = amountOn(task, dKey);
+          dailyAmounts.push(amt);
+          if (amt > 0) { monthTotal += amt; daysLogged++; if (amt > bestDay) bestDay = amt; badgeText = shortNum(amt); }
+          if (dKey === calState.selectedDate) cls += ' selected';
+        }
       } else {
         var active = state.tasks.filter(function(t){ return activeOn(t, dKey); });
         var doneCount = active.filter(function(t){ return isDoneOn(t, dKey); }).length;
         monthCompletions += doneCount;
-        badgeNum = doneCount;
+        if (doneCount > 0) badgeText = String(doneCount);
         if (active.length > 0 && doneCount === active.length) cls += ' done';
         else if (doneCount > 0) cls += ' partial';
         if (dKey === calState.selectedDate) cls += ' selected';
@@ -1639,16 +1830,16 @@
       if (isFuture) cls += ' future';
       cell.className = cls;
       cell.textContent = day;
-      if (badgeNum > 0) {
+      if (badgeText) {
         var badge = document.createElement('span');
         badge.className = 'cal-day-badge';
-        badge.textContent = badgeNum;
+        badge.textContent = badgeText;
         cell.appendChild(badge);
       }
       if (!isFuture) {
         cell.addEventListener('click', function(key){
           return function(){
-            if (task) {
+            if (task && !tracked) {
               setDone(task, key, !isDoneOn(task, key));
               save();
               render();
@@ -1662,7 +1853,28 @@
       calGrid.appendChild(cell);
     }
 
-    if (task) {
+    if (task && tracked) {
+      var unitTxt = task.unit ? ' ' + escapeHtml(task.unit) : '';
+      var maxAmt = Math.max.apply(null, dailyAmounts.concat([0]));
+      var bars = '<div class="amount-bars">' + dailyAmounts.map(function(a, idx){
+        var h = a > 0 ? Math.max(6, Math.round(a / maxAmt * 100)) : 0;
+        var isTodayCol = (calState.year + '-' + String(calState.month + 1).padStart(2, '0') + '-' + String(idx + 1).padStart(2, '0')) === todayKey;
+        return '<div class="amount-bar-col' + (isTodayCol ? ' today' : '') + '"><div class="amount-bar" style="height:' + h + '%"></div></div>';
+      }).join('') + '</div><div class="amount-bars-axis"><span>1</span><span>' + daysInMonth + '</span></div>';
+      calSummary.innerHTML =
+        '<div class="drink-month-summary">' +
+          '<div class="drink-stat"><b>' + fmtAmount(monthTotal) + '</b><span>total' + unitTxt + ' this month</span></div>' +
+          '<div class="drink-stat"><b>' + daysLogged + '</b><span>day' + (daysLogged === 1 ? '' : 's') + ' logged</span></div>' +
+        '</div>' +
+        '<div class="drink-month-summary">' +
+          '<div class="drink-stat"><b>' + (daysLogged ? fmtAmount(monthTotal / daysLogged) : '0') + '</b><span>average per day logged</span></div>' +
+          '<div class="drink-stat"><b>' + fmtAmount(bestDay) + '</b><span>best day</span></div>' +
+        '</div>' +
+        bars +
+        '<div class="cal-hint-line">🔥 ' + computeStreak(task) + '-day streak · tap a day to edit its amount</div>';
+      calDayPanel.style.display = '';
+      renderDayPanel();
+    } else if (task) {
       var streak = computeStreak(task);
       calSummary.innerHTML = '<b>' + monthCompletions + '</b> time' + (monthCompletions === 1 ? '' : 's') +
         ' this month · 🔥 ' + streak + '-day streak' +
@@ -1680,26 +1892,34 @@
 
   function renderDayPanel() {
     var dKey = calState.selectedDate;
-    var active = state.tasks.filter(function(t){ return activeOn(t, dKey); });
+    var singleTask = calState.taskId ? state.tasks.find(function(t){ return t.id === calState.taskId; }) : null;
+    var active = singleTask ? [singleTask] : state.tasks.filter(function(t){ return activeOn(t, dKey); });
     var doneList = active.filter(function(t){ return isDoneOn(t, dKey); });
     var notDone = active.filter(function(t){ return !isDoneOn(t, dKey); });
 
     calDayTitle.textContent = (dKey === todayStr() ? 'Today — ' : '') +
       dateFromKey(dKey).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
-    calDaySub.textContent = active.length
-      ? doneList.length + ' of ' + active.length + ' disciplines completed'
-      : 'No disciplines yet';
+    if (singleTask) {
+      var a = amountOn(singleTask, dKey);
+      calDaySub.textContent = a > 0 ? 'Logged ' + fmtAmount(a) + (singleTask.unit ? ' ' + singleTask.unit : '') : 'Nothing logged yet';
+    } else {
+      calDaySub.textContent = active.length
+        ? doneList.length + ' of ' + active.length + ' disciplines completed'
+        : 'No disciplines yet';
+    }
 
     calDayList.innerHTML = '';
     function addGroup(label, list, done) {
       if (!list.length) return;
-      var lab = document.createElement('div');
-      lab.className = 'day-group-label';
-      lab.textContent = label;
-      calDayList.appendChild(lab);
+      if (label) {
+        var lab = document.createElement('div');
+        lab.className = 'day-group-label';
+        lab.textContent = label;
+        calDayList.appendChild(lab);
+      }
       list.forEach(function(t){
         var row = document.createElement('div');
-        row.className = 'day-row' + (done ? ' done' : '');
+        row.className = 'day-row' + (done ? ' done' : '') + (t.track ? ' tracked' : '');
         var mark = document.createElement('span');
         mark.className = 'mark';
         mark.textContent = done ? '✓' : '';
@@ -1714,22 +1934,35 @@
           cat.textContent = t.category;
           row.appendChild(cat);
         }
-        row.addEventListener('click', function(){
-          setDone(t, dKey, !done);
-          save();
-          render();
-          renderCalendar();
-        });
+        if (t.track) {
+          row.appendChild(buildAmountControl(t, dKey, function(n){
+            setAmount(t, dKey, n);
+            save();
+            render();
+            renderCalendar();
+          }));
+        } else {
+          row.addEventListener('click', function(){
+            setDone(t, dKey, !done);
+            save();
+            render();
+            renderCalendar();
+          });
+        }
         calDayList.appendChild(row);
       });
     }
-    addGroup('Completed', doneList, true);
-    addGroup('Not completed', notDone, false);
-    if (active.length) {
-      var hint = document.createElement('div');
-      hint.className = 'day-hint';
-      hint.textContent = 'Tap a discipline to change it.';
-      calDayList.appendChild(hint);
+    if (singleTask) {
+      addGroup('', active, isDoneOn(singleTask, dKey));
+    } else {
+      addGroup('Completed', doneList, true);
+      addGroup('Not completed', notDone, false);
+      if (active.length) {
+        var hint = document.createElement('div');
+        hint.className = 'day-hint';
+        hint.textContent = 'Tap a discipline to change it.';
+        calDayList.appendChild(hint);
+      }
     }
   }
 
@@ -2013,11 +2246,16 @@
     if (!t || typeof t.text !== 'string' || !t.text.trim()) return null;
     var h = {};
     if (t.history && typeof t.history === 'object') {
-      Object.keys(t.history).forEach(function(k){ if (t.history[k]) h[k] = true; });
+      Object.keys(t.history).forEach(function(k){
+        var v = t.history[k];
+        if (typeof v === 'number' && v > 0) h[k] = v; else if (v) h[k] = true;
+      });
     }
+    var track = t.track === true || t.type === 'counter';
     return {
       id: uid(), type: 'simple', text: t.text.trim(),
       category: typeof t.category === 'string' ? t.category : '',
+      track: track, unit: track && typeof t.unit === 'string' ? t.unit : '',
       createdDate: todayStr(), history: h
     };
   }
