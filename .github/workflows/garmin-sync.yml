@@ -1,0 +1,28 @@
+name: Sync Garmin data
+
+on:
+  schedule:
+    - cron: '20 7,12,18,22 * * *'   # a few times a day (UTC)
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Print the structure (field names only, no values) of Garmin responses'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Pull steps and body battery from Garmin
+        run: node scripts/garmin-sync.mjs
+        env:
+          GARMIN_API_KEY: ${{ secrets.GARMIN_API_KEY }}
+          DEBUG_SHAPES: ${{ inputs.debug }}

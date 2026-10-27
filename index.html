@@ -1034,6 +1034,7 @@
       </div>
       <button class="add-btn-wide" id="healthSaveBtn" type="button">Save</button>
       <div class="day-hint" id="healthMsg"></div>
+      <div class="day-hint" id="healthSource"></div>
     </div>
   </div>
 
@@ -2207,13 +2208,45 @@
   var healthBatteryInput = document.getElementById('healthBatteryInput');
   var healthSaveBtn = document.getElementById('healthSaveBtn');
   var healthMsg = document.getElementById('healthMsg');
+  var healthSource = document.getElementById('healthSource');
   var healthState = { year: now.getFullYear(), month: now.getMonth(), metric: 'steps', selectedDate: todayStr() };
 
+  // Numbers pulled from Garmin by the scheduled job (Firestore doc "garmin-data").
+  // Anything typed in by hand takes priority over the Garmin value for that day.
+  var GARMIN_CACHE_KEY = 'daily_disciplines_garmin_cache';
+  var garminDays = {};
+  try {
+    var cachedGarmin = JSON.parse(localStorage.getItem(GARMIN_CACHE_KEY) || 'null');
+    if (cachedGarmin && typeof cachedGarmin === 'object') garminDays = cachedGarmin;
+  } catch (e) {}
+
+  function startGarminSync() {
+    if (!cloudReady || !db) return;
+    try {
+      db.collection(SYNC_DOC.collection).doc('garmin-data').onSnapshot(function(snap){
+        if (!snap.exists) return;
+        var data = snap.data();
+        garminDays = (data && data.days && typeof data.days === 'object') ? data.days : {};
+        try { localStorage.setItem(GARMIN_CACHE_KEY, JSON.stringify(garminDays)); } catch (e) {}
+        renderHealthTab();
+      }, function(){ /* offline or no access: the cached copy keeps working */ });
+    } catch (e) {}
+  }
+
+  function garminOn(dateKey) {
+    var g = garminDays[dateKey] || {};
+    return {
+      steps: typeof g.steps === 'number' ? g.steps : null,
+      battery: typeof g.battery === 'number' ? g.battery : null
+    };
+  }
+
   function healthValue(dateKey, metric) {
-    var h = state.health && state.health[dateKey];
-    if (!h) return null;
-    var v = metric === 'steps' ? h.steps : h.battery;
-    return typeof v === 'number' ? v : null;
+    var h = (state.health && state.health[dateKey]) || {};
+    var g = garminOn(dateKey);
+    var manual = metric === 'steps' ? h.steps : h.battery;
+    if (typeof manual === 'number') return manual;
+    return metric === 'steps' ? g.steps : g.battery;
   }
 
   function shortAmt(n) {
@@ -2341,6 +2374,13 @@
     var cur = (state.health && state.health[sel]) || {};
     healthStepsInput.value = typeof cur.steps === 'number' ? cur.steps : '';
     healthBatteryInput.value = typeof cur.battery === 'number' ? cur.battery : '';
+    var g = garminOn(sel);
+    healthStepsInput.placeholder = g.steps !== null ? g.steps.toLocaleString() + ' (Garmin)' : 'e.g. 8500';
+    healthBatteryInput.placeholder = g.battery !== null ? g.battery + ' (Garmin)' : 'e.g. 72';
+    var bits = [];
+    if (g.steps !== null) bits.push(g.steps.toLocaleString() + ' steps');
+    if (g.battery !== null) bits.push('body battery ' + g.battery);
+    healthSource.textContent = bits.length ? 'From Garmin: ' + bits.join(' · ') + '. Type a number to override it.' : '';
   }
 
   // ---- Backup & restore / import ----
@@ -2492,6 +2532,7 @@
 
   render();
   startCloudSync();
+  startGarminSync();
 })();
 </script>
 <script>
