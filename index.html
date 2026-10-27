@@ -873,6 +873,12 @@
   .amount-bars-axis { display: flex; justify-content: space-between; margin: 4px 8px 0; font-size: 10.5px; color: var(--text-dim); }
   .cal-hint-line { margin-top: 10px; font-size: 12px; color: var(--text-dim); }
   .drink-stat b.dry { color: var(--lime); }
+  .tab-btn { font-size: 12.5px; }
+  .tabs { gap: 4px; }
+  .health-fields { display: flex; gap: 10px; margin: 10px 0 2px; }
+  .health-field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-dim); }
+  .health-field .amount-input { width: 100%; }
+  .day-hint.err { color: #FF8A8A; opacity: 1; }
 </style>
 </head>
 <body>
@@ -894,6 +900,7 @@
     <button class="tab-btn" data-tab="add" id="tabAddBtn">Add</button>
     <button class="tab-btn" data-tab="calendar" id="tabCalendarBtn">Calendar</button>
     <button class="tab-btn" data-tab="drinks" id="tabDrinksBtn">Drinks</button>
+    <button class="tab-btn" data-tab="health" id="tabHealthBtn">Health</button>
   </div>
 
   <div id="todayView">
@@ -999,6 +1006,37 @@
     </div>
   </div>
 
+  <div id="healthView" style="display:none">
+    <div class="tabs" id="healthMetricRow">
+      <button class="tab-btn active" data-metric="steps" type="button">Steps</button>
+      <button class="tab-btn" data-metric="battery" type="button">Body battery</button>
+    </div>
+    <div class="cal-card">
+      <div class="cal-nav">
+        <button id="healthCalPrev" aria-label="Previous month">‹</button>
+        <span id="healthCalMonthLabel">Month Year</span>
+        <button id="healthCalNext" aria-label="Next month">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+      </div>
+      <div class="cal-grid" id="healthCalGrid"></div>
+    </div>
+    <div id="healthSummary"></div>
+    <div class="day-panel">
+      <div class="day-panel-title" id="healthDayTitle">Today</div>
+      <div class="day-panel-sub">Enter your numbers for this day, then Save. Clear a box to remove it.</div>
+      <div class="health-fields">
+        <label class="health-field"><span>Steps</span>
+          <input id="healthStepsInput" type="number" inputmode="numeric" min="0" step="1" class="amount-input" placeholder="e.g. 8500" /></label>
+        <label class="health-field"><span>Body battery (0–100)</span>
+          <input id="healthBatteryInput" type="number" inputmode="numeric" min="0" max="100" step="1" class="amount-input" placeholder="e.g. 72" /></label>
+      </div>
+      <button class="add-btn-wide" id="healthSaveBtn" type="button">Save</button>
+      <div class="day-hint" id="healthMsg"></div>
+    </div>
+  </div>
+
 </div>
 
 <div class="celebrate" id="celebrate">
@@ -1091,6 +1129,7 @@
       if (typeof t.category !== 'string') t.category = '';
     });
     if (!parsed.drinks || typeof parsed.drinks !== 'object') parsed.drinks = {};
+    if (!parsed.health || typeof parsed.health !== 'object') parsed.health = {};
     if (typeof parsed.updatedAt !== 'number') parsed.updatedAt = Date.now();
     return parsed;
   }
@@ -1165,6 +1204,7 @@
     return {
       tasks: [],           // {id, text, category, createdDate, history: {date: true}}
       drinks: {},          // date -> [{id, type, label, qty, cost}]
+      health: {},          // date -> {steps, battery}
       celebratedDate: '',  // the day the "all done" celebration last played
       updatedAt: Date.now()
     };
@@ -1325,6 +1365,8 @@
   var addView = document.getElementById('addView');
   var calendarView = document.getElementById('calendarView');
   var drinksView = document.getElementById('drinksView');
+  var tabHealthBtn = document.getElementById('tabHealthBtn');
+  var healthView = document.getElementById('healthView');
   var calTaskSelect = document.getElementById('calTaskSelect');
   var calGrid = document.getElementById('calGrid');
   var calMonthLabel = document.getElementById('calMonthLabel');
@@ -1363,12 +1405,14 @@
     today: { btn: tabTodayBtn, view: todayView },
     add: { btn: tabAddBtn, view: addView },
     calendar: { btn: tabCalendarBtn, view: calendarView },
-    drinks: { btn: tabDrinksBtn, view: drinksView }
+    drinks: { btn: tabDrinksBtn, view: drinksView },
+    health: { btn: tabHealthBtn, view: healthView }
   };
   tabTodayBtn.addEventListener('click', function(){ switchTab('today'); });
   tabAddBtn.addEventListener('click', function(){ switchTab('add'); });
   tabCalendarBtn.addEventListener('click', function(){ switchTab('calendar'); });
   tabDrinksBtn.addEventListener('click', function(){ switchTab('drinks'); });
+  tabHealthBtn.addEventListener('click', function(){ switchTab('health'); });
 
   function switchTab(tab) {
     Object.keys(TABS).forEach(function(key){
@@ -1380,6 +1424,7 @@
     if (tab === 'add') renderManageList();
     if (tab === 'calendar') renderCalendar();
     if (tab === 'drinks') renderDrinksTab();
+    if (tab === 'health') renderHealthTab();
   }
 
   function refreshAllViews() {
@@ -1387,6 +1432,7 @@
     renderManageList();
     renderCalendar();
     renderDrinksTab();
+    renderHealthTab();
   }
 
   // If the app stays open past midnight, roll the view over to the new day.
@@ -2148,6 +2194,154 @@
     }
   }
 
+
+  // ---- Health tab (steps + body battery, entered by hand) ----
+  var healthCalGrid = document.getElementById('healthCalGrid');
+  var healthCalMonthLabel = document.getElementById('healthCalMonthLabel');
+  var healthCalPrev = document.getElementById('healthCalPrev');
+  var healthCalNext = document.getElementById('healthCalNext');
+  var healthMetricRow = document.getElementById('healthMetricRow');
+  var healthSummary = document.getElementById('healthSummary');
+  var healthDayTitle = document.getElementById('healthDayTitle');
+  var healthStepsInput = document.getElementById('healthStepsInput');
+  var healthBatteryInput = document.getElementById('healthBatteryInput');
+  var healthSaveBtn = document.getElementById('healthSaveBtn');
+  var healthMsg = document.getElementById('healthMsg');
+  var healthState = { year: now.getFullYear(), month: now.getMonth(), metric: 'steps', selectedDate: todayStr() };
+
+  function healthValue(dateKey, metric) {
+    var h = state.health && state.health[dateKey];
+    if (!h) return null;
+    var v = metric === 'steps' ? h.steps : h.battery;
+    return typeof v === 'number' ? v : null;
+  }
+
+  function shortAmt(n) {
+    if (n >= 10000) return Math.round(n / 1000) + 'k';
+    if (n >= 1000) return (Math.round(n / 100) / 10) + 'k';
+    return String(n);
+  }
+
+  healthCalPrev.addEventListener('click', function(){ changeHealthMonth(-1); });
+  healthCalNext.addEventListener('click', function(){ changeHealthMonth(1); });
+  function changeHealthMonth(delta) {
+    healthState.month += delta;
+    if (healthState.month < 0) { healthState.month = 11; healthState.year -= 1; }
+    if (healthState.month > 11) { healthState.month = 0; healthState.year += 1; }
+    renderHealthTab();
+  }
+
+  healthMetricRow.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-metric]');
+    if (!btn) return;
+    healthState.metric = btn.getAttribute('data-metric');
+    renderHealthTab();
+  });
+
+  function setHealthMsg(text, isError) {
+    healthMsg.textContent = text;
+    healthMsg.classList.toggle('err', !!isError);
+  }
+
+  healthSaveBtn.addEventListener('click', function(){
+    var stepsRaw = healthStepsInput.value.trim();
+    var batRaw = healthBatteryInput.value.trim();
+    var h = {};
+    if (stepsRaw !== '') {
+      var steps = Math.round(parseFloat(stepsRaw));
+      if (isNaN(steps) || steps < 0) { setHealthMsg('Steps must be a number, 0 or more.', true); return; }
+      h.steps = steps;
+    }
+    if (batRaw !== '') {
+      var bat = Math.round(parseFloat(batRaw));
+      if (isNaN(bat) || bat < 0 || bat > 100) { setHealthMsg('Body battery must be between 0 and 100.', true); return; }
+      h.battery = bat;
+    }
+    var dKey = healthState.selectedDate;
+    if (!state.health) state.health = {};
+    if (Object.keys(h).length) state.health[dKey] = h; else delete state.health[dKey];
+    save();
+    renderHealthTab();
+    setHealthMsg(Object.keys(h).length ? 'Saved ✓' : 'Cleared.', false);
+  });
+
+  function renderHealthTab() {
+    var metric = healthState.metric;
+    var isSteps = metric === 'steps';
+    Array.prototype.forEach.call(healthMetricRow.querySelectorAll('[data-metric]'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-metric') === metric);
+    });
+
+    var monthDate = new Date(healthState.year, healthState.month, 1);
+    healthCalMonthLabel.textContent = monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    var firstWeekday = (monthDate.getDay() + 6) % 7;
+    var daysInMonth = new Date(healthState.year, healthState.month + 1, 0).getDate();
+    var todayKey = todayStr();
+
+    healthCalGrid.innerHTML = '';
+    for (var p = 0; p < firstWeekday; p++) {
+      var pad = document.createElement('div');
+      pad.className = 'cal-day pad';
+      healthCalGrid.appendChild(pad);
+    }
+
+    var vals = [];
+    var perDay = [];
+    for (var day = 1; day <= daysInMonth; day++) {
+      var dKey = healthState.year + '-' + String(healthState.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+      var v = healthValue(dKey, metric);
+      perDay.push({ key: dKey, v: v });
+      if (v !== null) vals.push(v);
+      var isFuture = dKey > todayKey;
+      var cell = document.createElement('div');
+      cell.className = 'cal-day' + (v !== null ? ' done' : '') + (dKey === todayKey ? ' today' : '') +
+        (dKey === healthState.selectedDate ? ' selected' : '') + (isFuture ? ' future' : '');
+      cell.textContent = day;
+      if (v !== null) {
+        var badge = document.createElement('span');
+        badge.className = 'cal-day-badge';
+        badge.textContent = isSteps ? shortAmt(v) : String(v);
+        cell.appendChild(badge);
+      }
+      if (!isFuture) {
+        cell.addEventListener('click', function(key){
+          return function(){ healthState.selectedDate = key; setHealthMsg('', false); renderHealthTab(); };
+        }(dKey));
+      }
+      healthCalGrid.appendChild(cell);
+    }
+
+    // ---- month stats + bar chart ----
+    var n = vals.length;
+    var sum = vals.reduce(function(a, b){ return a + b; }, 0);
+    var hi = n ? Math.max.apply(null, vals) : 0;
+    var lo = n ? Math.min.apply(null, vals) : 0;
+    var avg = n ? Math.round(sum / n) : 0;
+    function tile(value, label) { return '<div class="drink-stat"><b>' + value + '</b><span>' + label + '</span></div>'; }
+    var fmt = function(x){ return x.toLocaleString(); };
+    var html;
+    if (isSteps) {
+      html = '<div class="drink-month-summary">' + tile(fmt(sum), 'total steps this month') + tile(fmt(avg), 'average per day logged') + '</div>' +
+             '<div class="drink-month-summary">' + tile(fmt(hi), 'best day') + tile(n, 'day' + (n === 1 ? '' : 's') + ' logged') + '</div>';
+    } else {
+      html = '<div class="drink-month-summary">' + tile(n ? avg : '–', 'average body battery') + tile(n, 'day' + (n === 1 ? '' : 's') + ' logged') + '</div>' +
+             '<div class="drink-month-summary">' + tile(n ? hi : '–', 'highest') + tile(n ? lo : '–', 'lowest') + '</div>';
+    }
+    var scale = isSteps ? Math.max(hi, 1) : 100;
+    html += '<div class="amount-bars">' + perDay.map(function(d){
+      var h = d.v === null ? 0 : Math.max(4, Math.round(d.v / scale * 100));
+      return '<div class="amount-bar-col' + (d.key === todayKey ? ' today' : '') + '"><div class="amount-bar" style="height:' + h + '%"></div></div>';
+    }).join('') + '</div><div class="amount-bars-axis"><span>1</span><span>' + daysInMonth + '</span></div>';
+    healthSummary.innerHTML = html;
+
+    // ---- day panel ----
+    var sel = healthState.selectedDate;
+    healthDayTitle.textContent = (sel === todayKey ? 'Today — ' : '') +
+      dateFromKey(sel).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+    var cur = (state.health && state.health[sel]) || {};
+    healthStepsInput.value = typeof cur.steps === 'number' ? cur.steps : '';
+    healthBatteryInput.value = typeof cur.battery === 'number' ? cur.battery : '';
+  }
 
   // ---- Backup & restore / import ----
   var restoreBtn = document.getElementById('restoreBtn');
