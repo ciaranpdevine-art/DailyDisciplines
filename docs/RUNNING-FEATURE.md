@@ -20,4 +20,4 @@ Several runs on one day are separate records sharing a `date`.
 Helpers `runsOn(date)`, `kmStr` (metres -> miles, despite the name), `paceStr` (min/mile), `durStr`. Calendar badge = total miles that day; day panel lists each run (distance, time, pace, HR, elevation in ft, treadmill tag); month stats = total distance, runs/days, average pace (distance weighted), longest run, total elevation (ft), average run, plus daily bar chart. Display is miles and feet; stored data stays metric.
 
 ## Moving to the 6-year running log
-Reuse `scripts/garmin-sync.mjs` as is, point `DOC_URL` at the other app's store, and run once with `SINCE=<first run date>` to backfill (the job pages in 100s and splits nothing for activities, so very long ranges are fine). Merge on activity ID if the old log has Garmin IDs; otherwise match by date plus distance.
+The existing log already holds the history and its storage format is staying as it is: no matching or migration of old data. Only the display ideas and the Garmin sync script are meant to be reused, adapted to the other app's own format.
