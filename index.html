@@ -2274,11 +2274,11 @@
     out.sort(function(a, b){ return a.id < b.id ? -1 : 1; });
     return out;
   }
-  function kmStr(m) { return (Math.round(m / 100) / 10).toFixed(1); }
+  function kmStr(m) { return (Math.round(m / 1609.344 * 10) / 10).toFixed(1); } // metres -> miles
   function paceStr(distM, durS) {
     if (!distM) return '–';
-    var sec = Math.round(durS / (distM / 1000));
-    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') + '/km';
+    var sec = Math.round(durS / (distM / 1609.344));
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') + '/mi';
   }
   function durStr(s) {
     s = Math.round(s);
@@ -2403,11 +2403,11 @@
       var totM = mRuns.reduce(function(a, r){ return a + r.distance; }, 0);
       var totS = mRuns.reduce(function(a, r){ return a + r.duration; }, 0);
       var longest = mRuns.reduce(function(a, r){ return Math.max(a, r.distance); }, 0);
-      var fastest = mRuns.filter(function(r){ return r.distance >= 1000; })
+      var fastest = mRuns.filter(function(r){ return r.distance >= 1609; })
         .reduce(function(a, r){ var p = r.duration / r.distance; return a === null || p < a ? p : a; }, null);
-      html = '<div class="drink-month-summary">' + tile(kmStr(totM) + ' km', 'total distance') + tile(mRuns.length, 'run' + (mRuns.length === 1 ? '' : 's') + ' · ' + n + ' day' + (n === 1 ? '' : 's')) + '</div>' +
-             '<div class="drink-month-summary">' + tile(mRuns.length ? paceStr(totM, totS) : '–', 'average pace') + tile(mRuns.length ? kmStr(longest) + ' km' : '–', 'longest run') + '</div>' +
-             '<div class="drink-month-summary">' + tile(fastest !== null ? paceStr(1000, fastest * 1000) : '–', 'fastest average pace') + tile(mRuns.length ? kmStr(totM / mRuns.length) + ' km' : '–', 'average run') + '</div>';
+      html = '<div class="drink-month-summary">' + tile(kmStr(totM) + ' mi', 'total distance') + tile(mRuns.length, 'run' + (mRuns.length === 1 ? '' : 's') + ' · ' + n + ' day' + (n === 1 ? '' : 's')) + '</div>' +
+             '<div class="drink-month-summary">' + tile(mRuns.length ? paceStr(totM, totS) : '–', 'average pace') + tile(mRuns.length ? kmStr(longest) + ' mi' : '–', 'longest run') + '</div>' +
+             '<div class="drink-month-summary">' + tile(fastest !== null ? paceStr(1609.344, fastest * 1609.344) : '–', 'fastest average pace') + tile(mRuns.length ? kmStr(totM / mRuns.length) + ' mi' : '–', 'average run') + '</div>';
     } else if (isSteps) {
       html = '<div class="drink-month-summary">' + tile(fmt(sum), 'total steps this month') + tile(fmt(avg), 'average per day logged') + '</div>' +
              '<div class="drink-month-summary">' + tile(fmt(hi), 'best day') + tile(n, 'day' + (n === 1 ? '' : 's') + ' logged') + '</div>';
@@ -2437,7 +2437,7 @@
         if (typeof r.avgHr === 'number') bits2.push(r.avgHr + ' bpm');
         if (typeof r.elevation === 'number') bits2.push(r.elevation + ' m up');
         if (r.type && r.type.indexOf('treadmill') >= 0) bits2.push('treadmill');
-        rh += '<div class="day-row done" style="cursor:default"><div class="name"><b>' + (selRuns.length > 1 ? 'Run ' + (i + 1) + ' · ' : '') + kmStr(r.distance) + ' km</b><br><span style="color:var(--text-dim);font-size:12px">' + bits2.join(' · ') + '</span></div></div>';
+        rh += '<div class="day-row done" style="cursor:default"><div class="name"><b>' + (selRuns.length > 1 ? 'Run ' + (i + 1) + ' · ' : '') + kmStr(r.distance) + ' mi</b><br><span style="color:var(--text-dim);font-size:12px">' + bits2.join(' · ') + '</span></div></div>';
       });
       healthRunList.innerHTML = rh;
       return;
