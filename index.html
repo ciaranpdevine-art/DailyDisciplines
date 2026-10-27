@@ -2434,7 +2434,7 @@
       selRuns.forEach(function(r, i){
         var bits2 = [durStr(r.duration), paceStr(r.distance, r.duration)];
         if (typeof r.avgHr === 'number') bits2.push(r.avgHr + ' bpm');
-        if (typeof r.elevation === 'number') bits2.push(r.elevation + ' m up');
+        if (typeof r.elevation === 'number') bits2.push(Math.round(r.elevation * 3.28084).toLocaleString() + ' ft up');
         if (r.type && r.type.indexOf('treadmill') >= 0) bits2.push('treadmill');
         rh += '<div class="day-row done" style="cursor:default"><div class="name"><b>' + (selRuns.length > 1 ? 'Run ' + (i + 1) + ' · ' : '') + kmStr(r.distance) + ' mi</b><br><span style="color:var(--text-dim);font-size:12px">' + bits2.join(' · ') + '</span></div></div>';
       });
