@@ -2403,11 +2403,10 @@
       var totM = mRuns.reduce(function(a, r){ return a + r.distance; }, 0);
       var totS = mRuns.reduce(function(a, r){ return a + r.duration; }, 0);
       var longest = mRuns.reduce(function(a, r){ return Math.max(a, r.distance); }, 0);
-      var fastest = mRuns.filter(function(r){ return r.distance >= 1609; })
-        .reduce(function(a, r){ var p = r.duration / r.distance; return a === null || p < a ? p : a; }, null);
+      var totElev = mRuns.reduce(function(a, r){ return a + (typeof r.elevation === 'number' ? r.elevation : 0); }, 0);
       html = '<div class="drink-month-summary">' + tile(kmStr(totM) + ' mi', 'total distance') + tile(mRuns.length, 'run' + (mRuns.length === 1 ? '' : 's') + ' · ' + n + ' day' + (n === 1 ? '' : 's')) + '</div>' +
              '<div class="drink-month-summary">' + tile(mRuns.length ? paceStr(totM, totS) : '–', 'average pace') + tile(mRuns.length ? kmStr(longest) + ' mi' : '–', 'longest run') + '</div>' +
-             '<div class="drink-month-summary">' + tile(fastest !== null ? paceStr(1609.344, fastest * 1609.344) : '–', 'fastest average pace') + tile(mRuns.length ? kmStr(totM / mRuns.length) + ' mi' : '–', 'average run') + '</div>';
+             '<div class="drink-month-summary">' + tile(mRuns.length ? Math.round(totElev * 3.28084).toLocaleString() + ' ft' : '–', 'total elevation gain') + tile(mRuns.length ? kmStr(totM / mRuns.length) + ' mi' : '–', 'average run') + '</div>';
     } else if (isSteps) {
       html = '<div class="drink-month-summary">' + tile(fmt(sum), 'total steps this month') + tile(fmt(avg), 'average per day logged') + '</div>' +
              '<div class="drink-month-summary">' + tile(fmt(hi), 'best day') + tile(n, 'day' + (n === 1 ? '' : 's') + ' logged') + '</div>';
