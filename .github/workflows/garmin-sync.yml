@@ -9,6 +9,10 @@ on:
         description: 'Print the structure (field names only, no values) of Garmin responses'
         type: boolean
         default: false
+      since:
+        description: 'Optional: back-fill everything from this date (YYYY-MM-DD), e.g. 2026-10-01'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -26,3 +30,4 @@ jobs:
         env:
           GARMIN_API_KEY: ${{ secrets.GARMIN_API_KEY }}
           DEBUG_SHAPES: ${{ inputs.debug }}
+          SINCE: ${{ inputs.since }}

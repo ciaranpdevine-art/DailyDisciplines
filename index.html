@@ -1010,6 +1010,7 @@
     <div class="tabs" id="healthMetricRow">
       <button class="tab-btn active" data-metric="steps" type="button">Steps</button>
       <button class="tab-btn" data-metric="battery" type="button">Body battery</button>
+      <button class="tab-btn" data-metric="running" type="button">Running</button>
     </div>
     <div class="cal-card">
       <div class="cal-nav">
@@ -1025,8 +1026,9 @@
     <div id="healthSummary"></div>
     <div class="day-panel">
       <div class="day-panel-title" id="healthDayTitle">Today</div>
-      <div class="day-panel-sub">Enter your numbers for this day, then Save. Clear a box to remove it.</div>
-      <div class="health-fields">
+      <div id="healthRunList" style="display:none"></div>
+      <div class="day-panel-sub" id="healthManualSub">Enter your numbers for this day, then Save. Clear a box to remove it.</div>
+      <div class="health-fields" id="healthFields">
         <label class="health-field"><span>Steps</span>
           <input id="healthStepsInput" type="number" inputmode="numeric" min="0" step="1" class="amount-input" placeholder="e.g. 8500" /></label>
         <label class="health-field"><span>Body battery (0–100)</span>
@@ -2209,12 +2211,21 @@
   var healthSaveBtn = document.getElementById('healthSaveBtn');
   var healthMsg = document.getElementById('healthMsg');
   var healthSource = document.getElementById('healthSource');
+  var healthRunList = document.getElementById('healthRunList');
+  var healthFields = document.getElementById('healthFields');
+  var healthManualSub = document.getElementById('healthManualSub');
   var healthState = { year: now.getFullYear(), month: now.getMonth(), metric: 'steps', selectedDate: todayStr() };
 
   // Numbers pulled from Garmin by the scheduled job (Firestore doc "garmin-data").
   // Anything typed in by hand takes priority over the Garmin value for that day.
   var GARMIN_CACHE_KEY = 'daily_disciplines_garmin_cache';
   var garminDays = {};
+  var garminRuns = {};
+  var GARMIN_RUNS_KEY = 'daily_disciplines_garmin_runs';
+  try {
+    var cachedRuns = JSON.parse(localStorage.getItem(GARMIN_RUNS_KEY) || 'null');
+    if (cachedRuns && typeof cachedRuns === 'object') garminRuns = cachedRuns;
+  } catch (e) {}
   try {
     var cachedGarmin = JSON.parse(localStorage.getItem(GARMIN_CACHE_KEY) || 'null');
     if (cachedGarmin && typeof cachedGarmin === 'object') garminDays = cachedGarmin;
@@ -2227,7 +2238,9 @@
         if (!snap.exists) return;
         var data = snap.data();
         garminDays = (data && data.days && typeof data.days === 'object') ? data.days : {};
+        garminRuns = (data && data.runs && typeof data.runs === 'object') ? data.runs : {};
         try { localStorage.setItem(GARMIN_CACHE_KEY, JSON.stringify(garminDays)); } catch (e) {}
+        try { localStorage.setItem(GARMIN_RUNS_KEY, JSON.stringify(garminRuns)); } catch (e) {}
         renderHealthTab();
       }, function(){ /* offline or no access: the cached copy keeps working */ });
     } catch (e) {}
@@ -2247,6 +2260,30 @@
     var manual = metric === 'steps' ? h.steps : h.battery;
     if (typeof manual === 'number') return manual;
     return metric === 'steps' ? g.steps : g.battery;
+  }
+
+  // Runs on a given day (several allowed), oldest first.
+  function runsOn(dateKey) {
+    var out = [];
+    Object.keys(garminRuns).forEach(function(id){
+      var r = garminRuns[id];
+      if (r && r.date === dateKey && typeof r.distance === 'number' && typeof r.duration === 'number') {
+        out.push({ id: id, distance: r.distance, duration: r.duration, avgHr: r.avgHr, elevation: r.elevation, type: r.type });
+      }
+    });
+    out.sort(function(a, b){ return a.id < b.id ? -1 : 1; });
+    return out;
+  }
+  function kmStr(m) { return (Math.round(m / 100) / 10).toFixed(1); }
+  function paceStr(distM, durS) {
+    if (!distM) return '–';
+    var sec = Math.round(durS / (distM / 1000));
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') + '/km';
+  }
+  function durStr(s) {
+    s = Math.round(s);
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0');
   }
 
   function shortAmt(n) {
@@ -2301,6 +2338,7 @@
   function renderHealthTab() {
     var metric = healthState.metric;
     var isSteps = metric === 'steps';
+    var isRun = metric === 'running';
     Array.prototype.forEach.call(healthMetricRow.querySelectorAll('[data-metric]'), function(b){
       b.classList.toggle('active', b.getAttribute('data-metric') === metric);
     });
@@ -2322,7 +2360,13 @@
     var perDay = [];
     for (var day = 1; day <= daysInMonth; day++) {
       var dKey = healthState.year + '-' + String(healthState.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-      var v = healthValue(dKey, metric);
+      var v;
+      if (isRun) {
+        var dayRuns = runsOn(dKey);
+        v = dayRuns.length ? dayRuns.reduce(function(a, r){ return a + r.distance; }, 0) : null;
+      } else {
+        v = healthValue(dKey, metric);
+      }
       perDay.push({ key: dKey, v: v });
       if (v !== null) vals.push(v);
       var isFuture = dKey > todayKey;
@@ -2333,7 +2377,7 @@
       if (v !== null) {
         var badge = document.createElement('span');
         badge.className = 'cal-day-badge';
-        badge.textContent = isSteps ? shortAmt(v) : String(v);
+        badge.textContent = isRun ? kmStr(v) : (isSteps ? shortAmt(v) : String(v));
         cell.appendChild(badge);
       }
       if (!isFuture) {
@@ -2353,14 +2397,25 @@
     function tile(value, label) { return '<div class="drink-stat"><b>' + value + '</b><span>' + label + '</span></div>'; }
     var fmt = function(x){ return x.toLocaleString(); };
     var html;
-    if (isSteps) {
+    if (isRun) {
+      var mRuns = [];
+      perDay.forEach(function(d){ if (d.v !== null) mRuns = mRuns.concat(runsOn(d.key)); });
+      var totM = mRuns.reduce(function(a, r){ return a + r.distance; }, 0);
+      var totS = mRuns.reduce(function(a, r){ return a + r.duration; }, 0);
+      var longest = mRuns.reduce(function(a, r){ return Math.max(a, r.distance); }, 0);
+      var fastest = mRuns.filter(function(r){ return r.distance >= 1000; })
+        .reduce(function(a, r){ var p = r.duration / r.distance; return a === null || p < a ? p : a; }, null);
+      html = '<div class="drink-month-summary">' + tile(kmStr(totM) + ' km', 'total distance') + tile(mRuns.length, 'run' + (mRuns.length === 1 ? '' : 's') + ' · ' + n + ' day' + (n === 1 ? '' : 's')) + '</div>' +
+             '<div class="drink-month-summary">' + tile(mRuns.length ? paceStr(totM, totS) : '–', 'average pace') + tile(mRuns.length ? kmStr(longest) + ' km' : '–', 'longest run') + '</div>' +
+             '<div class="drink-month-summary">' + tile(fastest !== null ? paceStr(1000, fastest * 1000) : '–', 'fastest average pace') + tile(mRuns.length ? kmStr(totM / mRuns.length) + ' km' : '–', 'average run') + '</div>';
+    } else if (isSteps) {
       html = '<div class="drink-month-summary">' + tile(fmt(sum), 'total steps this month') + tile(fmt(avg), 'average per day logged') + '</div>' +
              '<div class="drink-month-summary">' + tile(fmt(hi), 'best day') + tile(n, 'day' + (n === 1 ? '' : 's') + ' logged') + '</div>';
     } else {
       html = '<div class="drink-month-summary">' + tile(n ? avg : '–', 'average body battery') + tile(n, 'day' + (n === 1 ? '' : 's') + ' logged') + '</div>' +
              '<div class="drink-month-summary">' + tile(n ? hi : '–', 'highest') + tile(n ? lo : '–', 'lowest') + '</div>';
     }
-    var scale = isSteps ? Math.max(hi, 1) : 100;
+    var scale = (isSteps || isRun) ? Math.max(hi, 1) : 100;
     html += '<div class="amount-bars">' + perDay.map(function(d){
       var h = d.v === null ? 0 : Math.max(4, Math.round(d.v / scale * 100));
       return '<div class="amount-bar-col' + (d.key === todayKey ? ' today' : '') + '"><div class="amount-bar" style="height:' + h + '%"></div></div>';
@@ -2371,6 +2426,22 @@
     var sel = healthState.selectedDate;
     healthDayTitle.textContent = (sel === todayKey ? 'Today — ' : '') +
       dateFromKey(sel).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+    var manualEls = [healthFields, healthSaveBtn, healthMsg, healthSource, healthManualSub];
+    manualEls.forEach(function(el){ el.style.display = isRun ? 'none' : ''; });
+    healthRunList.style.display = isRun ? '' : 'none';
+    if (isRun) {
+      var selRuns = runsOn(sel);
+      var rh = '<div class="day-panel-sub">' + (selRuns.length ? selRuns.length + ' run' + (selRuns.length === 1 ? '' : 's') + ' from Garmin' : 'No run recorded this day.') + '</div>';
+      selRuns.forEach(function(r, i){
+        var bits2 = [durStr(r.duration), paceStr(r.distance, r.duration)];
+        if (typeof r.avgHr === 'number') bits2.push(r.avgHr + ' bpm');
+        if (typeof r.elevation === 'number') bits2.push(r.elevation + ' m up');
+        if (r.type && r.type.indexOf('treadmill') >= 0) bits2.push('treadmill');
+        rh += '<div class="day-row done" style="cursor:default"><div class="name"><b>' + (selRuns.length > 1 ? 'Run ' + (i + 1) + ' · ' : '') + kmStr(r.distance) + ' km</b><br><span style="color:var(--text-dim);font-size:12px">' + bits2.join(' · ') + '</span></div></div>';
+      });
+      healthRunList.innerHTML = rh;
+      return;
+    }
     var cur = (state.health && state.health[sel]) || {};
     healthStepsInput.value = typeof cur.steps === 'number' ? cur.steps : '';
     healthBatteryInput.value = typeof cur.battery === 'number' ? cur.battery : '';
