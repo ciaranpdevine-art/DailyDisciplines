@@ -640,6 +640,7 @@
     justify-content: center;
   }
   .task-edit-btn:active { opacity: 1; }
+  .task-move-btn { width: 24px; font-size: 11px; color: var(--text-dim); }
   .task.editing {
     align-items: stretch;
     padding: 12px;
@@ -1680,7 +1681,7 @@
     }
     var ul = document.createElement('ul');
     ul.className = 'task-list';
-    state.tasks.forEach(function(t){
+    state.tasks.forEach(function(t, idx){
       var li = document.createElement('li');
 
       if (editingTaskId === t.id) {
@@ -1783,8 +1784,26 @@
       del.textContent = '×';
       del.addEventListener('click', function(){ onDelete(t.id); });
 
+      function moveBtn(label, glyph, dir) {
+        var btn = document.createElement('button');
+        btn.className = 'task-edit-btn task-move-btn';
+        btn.setAttribute('aria-label', label);
+        btn.textContent = glyph;
+        var target = idx + dir;
+        if (target < 0 || target >= state.tasks.length) { btn.disabled = true; btn.style.opacity = '0.15'; }
+        btn.addEventListener('click', function(){
+          if (target < 0 || target >= state.tasks.length) return;
+          var moved = state.tasks.splice(idx, 1)[0];
+          state.tasks.splice(target, 0, moved);
+          save(); render(); renderManageList();
+        });
+        return btn;
+      }
+
       li.appendChild(text);
       li.appendChild(meta);
+      li.appendChild(moveBtn('Move up', '▲', -1));
+      li.appendChild(moveBtn('Move down', '▼', 1));
       li.appendChild(editBtn);
       li.appendChild(del);
       ul.appendChild(li);
