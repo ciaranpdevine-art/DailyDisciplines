@@ -391,6 +391,13 @@
     outline: 2px solid var(--coral);
     outline-offset: -2px;
   }
+  /* Body battery colour bands */
+  .cal-day.done.bb-4 { background: var(--lime); color: #12132A; }   /* 95+ */
+  .cal-day.done.bb-3 { background: #5EC8B6; color: #0B2420; }       /* 85-94 */
+  .cal-day.done.bb-2 { background: #F2C14E; color: #2A1E00; }       /* 75-84 */
+  .cal-day.done.bb-1 { background: #FF8A73; color: #2A0F08; }       /* under 75 */
+  .bb-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center; margin-top: 12px; font-size: 11.5px; color: var(--text-dim); }
+  .bb-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
   .cal-day-badge {
     position: absolute;
     bottom: 1px;
@@ -2309,6 +2316,10 @@
     return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0');
   }
 
+  function batteryBand(v) {
+    return v >= 95 ? 'bb-4' : v >= 85 ? 'bb-3' : v >= 75 ? 'bb-2' : 'bb-1';
+  }
+
   function shortAmt(n) {
     if (n >= 10000) return Math.round(n / 1000) + 'k';
     if (n >= 1000) return (Math.round(n / 100) / 10) + 'k';
@@ -2395,7 +2406,8 @@
       var isFuture = dKey > todayKey;
       var cell = document.createElement('div');
       cell.className = 'cal-day' + (v !== null ? ' done' : '') + (dKey === todayKey ? ' today' : '') +
-        (dKey === healthState.selectedDate ? ' selected' : '') + (isFuture ? ' future' : '');
+        (dKey === healthState.selectedDate ? ' selected' : '') + (isFuture ? ' future' : '') +
+        (!isSteps && !isRun && v !== null ? ' ' + batteryBand(v) : '');
       cell.textContent = day;
       if (v !== null) {
         var badge = document.createElement('span');
@@ -2442,6 +2454,11 @@
       var h = d.v === null ? 0 : Math.max(4, Math.round(d.v / scale * 100));
       return '<div class="amount-bar-col' + (d.key === todayKey ? ' today' : '') + '"><div class="amount-bar" style="height:' + h + '%"></div></div>';
     }).join('') + '</div><div class="amount-bars-axis"><span>1</span><span>' + daysInMonth + '</span></div>';
+    if (!isSteps && !isRun) {
+      html = '<div class="bb-legend">' +
+        '<span><i style="background:var(--lime)"></i>95+</span><span><i style="background:#5EC8B6"></i>85–94</span>' +
+        '<span><i style="background:#F2C14E"></i>75–84</span><span><i style="background:#FF8A73"></i>under 75</span></div>' + html;
+    }
     healthSummary.innerHTML = html;
 
     // ---- day panel ----
