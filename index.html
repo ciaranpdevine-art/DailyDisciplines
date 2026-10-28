@@ -640,6 +640,10 @@
     justify-content: center;
   }
   .task-edit-btn:active { opacity: 1; }
+  /* Manage list: name on its own line, then tags on the left and controls on the right */
+  .task.manage-row { flex-wrap: wrap; row-gap: 8px; gap: 8px; }
+  .task.manage-row .task-text { flex: 1 1 100%; }
+  .task.manage-row .task-meta { margin-right: auto; }
   .task-move-btn { width: 24px; font-size: 11px; color: var(--text-dim); }
   .task.editing {
     align-items: stretch;
@@ -1759,7 +1763,7 @@
         return;
       }
 
-      li.className = 'task';
+      li.className = 'task manage-row';
       li.style.cursor = 'default';
       var text = document.createElement('div');
       text.className = 'task-text';
