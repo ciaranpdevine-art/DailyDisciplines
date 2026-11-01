@@ -892,6 +892,21 @@
   .health-field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-dim); }
   .health-field .amount-input { width: 100%; }
   .day-hint.err { color: #FF8A8A; opacity: 1; }
+  .wt-units, .wt-range { margin: 10px 0 4px; }
+  .wt-range { margin: 14px 0 6px; }
+  .wt-svg { width: 100%; height: auto; display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  .wt-grid { stroke: var(--line); stroke-width: 1; opacity: 0.6; }
+  .wt-axis { fill: var(--text-dim); font-size: 9.5px; font-family: var(--font-head); }
+  .wt-today { stroke: var(--violet); stroke-width: 1; opacity: 0.35; }
+  .wt-line { fill: none; stroke: var(--lime); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  .wt-dot { fill: var(--lime); stroke: var(--bg); stroke-width: 1.5; }
+  .wt-trend { stroke: var(--coral); stroke-width: 1.8; }
+  .wt-forecast { stroke: var(--violet); stroke-width: 2; stroke-dasharray: 5 4; }
+  .wt-goal { stroke: var(--text-dim); stroke-width: 1.2; stroke-dasharray: 2 4; }
+  .wt-goal-label { fill: var(--text-dim); font-size: 9.5px; font-family: var(--font-head); }
+  .wt-fc-row { display: flex; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--text-dim); }
+  .wt-fc-row b { color: var(--text); font-family: var(--font-head); }
+  #weightView .day-panel { margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -1024,7 +1039,9 @@
       <button class="tab-btn active" data-metric="steps" type="button">Steps</button>
       <button class="tab-btn" data-metric="battery" type="button">Body battery</button>
       <button class="tab-btn" data-metric="running" type="button">Running</button>
+      <button class="tab-btn" data-metric="weight" type="button">Weight</button>
     </div>
+    <div id="healthMain">
     <div class="cal-card">
       <div class="cal-nav">
         <button id="healthCalPrev" aria-label="Previous month">‹</button>
@@ -1050,6 +1067,52 @@
       <button class="add-btn-wide" id="healthSaveBtn" type="button">Save</button>
       <div class="day-hint" id="healthMsg"></div>
       <div class="day-hint" id="healthSource"></div>
+    </div>
+    </div>
+
+    <div id="weightView" style="display:none">
+      <div class="day-panel" style="margin-top:0">
+        <div class="day-panel-title">Weekly weigh-in</div>
+        <div class="day-panel-sub" id="wtDue"></div>
+        <div class="tabs wt-units" id="wtUnitRow">
+          <button class="tab-btn" data-unit="kg" type="button">kg</button>
+          <button class="tab-btn" data-unit="lb" type="button">lb</button>
+          <button class="tab-btn" data-unit="st" type="button">st + lb</button>
+        </div>
+        <div class="health-fields">
+          <label class="health-field"><span>Date</span>
+            <input id="wtDate" type="date" class="amount-input" /></label>
+          <label class="health-field"><span id="wtLabelA">Weight (kg)</span>
+            <input id="wtA" type="number" inputmode="decimal" min="0" step="0.1" class="amount-input" placeholder="e.g. 82.4" /></label>
+          <label class="health-field" id="wtFieldB" style="display:none"><span>Pounds</span>
+            <input id="wtB" type="number" inputmode="decimal" min="0" max="13.9" step="0.1" class="amount-input" placeholder="e.g. 4" /></label>
+        </div>
+        <button class="add-btn-wide" id="wtSave" type="button">Save weigh-in</button>
+        <div class="day-hint" id="wtMsg"></div>
+      </div>
+
+      <div id="wtStats"></div>
+
+      <div class="wt-range tabs" id="wtRangeRow">
+        <button class="tab-btn" data-range="3m" type="button">3 months</button>
+        <button class="tab-btn" data-range="6m" type="button">6 months</button>
+        <button class="tab-btn" data-range="all" type="button">All</button>
+      </div>
+      <div id="wtChart"></div>
+      <div id="wtForecast"></div>
+
+      <div class="day-panel">
+        <div class="day-panel-title">Goal weight</div>
+        <div class="health-fields">
+          <label class="health-field"><span id="wtGoalLabelA">Goal weight</span>
+            <input id="wtGoalA" type="number" inputmode="decimal" min="0" step="0.1" class="amount-input" placeholder="e.g. 78" /></label>
+          <label class="health-field" id="wtGoalFieldB" style="display:none"><span>Pounds</span>
+            <input id="wtGoalB" type="number" inputmode="decimal" min="0" max="13.9" step="0.1" class="amount-input" placeholder="e.g. 0" /></label>
+        </div>
+        <button class="add-btn-wide" id="wtGoalSave" type="button">Save goal</button>
+        <div class="day-hint" id="wtGoalMsg">Clear the box and save to remove your goal.</div>
+      </div>
+      <div id="wtHistory"></div>
     </div>
   </div>
 
@@ -1146,6 +1209,10 @@
     });
     if (!parsed.drinks || typeof parsed.drinks !== 'object') parsed.drinks = {};
     if (!parsed.health || typeof parsed.health !== 'object') parsed.health = {};
+    if (!parsed.weights || typeof parsed.weights !== 'object') parsed.weights = {};
+    Object.keys(parsed.weights).forEach(function(k){ if (typeof parsed.weights[k] !== 'number' || !isFinite(parsed.weights[k])) delete parsed.weights[k]; });
+    if (typeof parsed.weightGoal !== 'number' || !isFinite(parsed.weightGoal)) parsed.weightGoal = null;
+    if (parsed.weightUnit !== 'lb' && parsed.weightUnit !== 'st') parsed.weightUnit = 'kg';
     if (typeof parsed.updatedAt !== 'number') parsed.updatedAt = Date.now();
     return parsed;
   }
@@ -1221,6 +1288,9 @@
       tasks: [],           // {id, text, category, createdDate, history: {date: true}}
       drinks: {},          // date -> [{id, type, label, qty, cost}]
       health: {},          // date -> {steps, battery}
+      weights: {},         // date -> kg
+      weightGoal: null,    // kg
+      weightUnit: 'kg',    // kg | lb | st
       celebratedDate: '',  // the day the "all done" celebration last played
       updatedAt: Date.now()
     };
@@ -2377,6 +2447,10 @@
     Array.prototype.forEach.call(healthMetricRow.querySelectorAll('[data-metric]'), function(b){
       b.classList.toggle('active', b.getAttribute('data-metric') === metric);
     });
+    var isWeight = metric === 'weight';
+    document.getElementById('healthMain').style.display = isWeight ? 'none' : '';
+    document.getElementById('weightView').style.display = isWeight ? '' : 'none';
+    if (isWeight) { renderWeight(); return; }
 
     var monthDate = new Date(healthState.year, healthState.month, 1);
     healthCalMonthLabel.textContent = monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -2502,6 +2576,303 @@
     if (g.battery !== null) bits.push('body battery ' + g.battery);
     healthSource.textContent = bits.length ? 'From Garmin: ' + bits.join(' · ') + '. Type a number to override it.' : '';
   }
+
+  // ---- Weight (weekly weigh-ins, trend + forecast) ----
+  // Stored in kilograms (state.weights: date -> kg); shown in kg, lb or stone + lb.
+  var KG_PER_LB = 0.45359237;
+  var wtEl = {};
+  ['wtUnitRow','wtDate','wtA','wtB','wtLabelA','wtFieldB','wtSave','wtMsg','wtDue','wtGoalA','wtGoalB','wtGoalLabelA','wtGoalFieldB','wtGoalSave','wtGoalMsg',
+   'wtStats','wtRangeRow','wtChart','wtForecast','wtHistory'].forEach(function(id){ wtEl[id] = document.getElementById(id); });
+  var weightUI = { range: '3m', showAll: false };
+
+  function wtUnit() { return state.weightUnit === 'lb' || state.weightUnit === 'st' ? state.weightUnit : 'kg'; }
+  function dayNum(key) { var p = key.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000; }
+  function keyOfDay(n) { return new Date(n * 86400000).toISOString().slice(0, 10); }
+  function niceDate(n, withYear) {
+    return new Date(n * 86400000).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: withYear ? 'numeric' : undefined, timeZone: 'UTC' });
+  }
+  function r1(x) { return (Math.round(x * 10) / 10).toFixed(1); }
+  function toKg(unit, a, b) {
+    if (unit === 'kg') return a;
+    if (unit === 'lb') return a * KG_PER_LB;
+    return (a * 14 + (b || 0)) * KG_PER_LB;
+  }
+  function fmtWeight(kg, unit) {
+    if (unit === 'kg') return r1(kg) + ' kg';
+    var lb = Math.round(kg / KG_PER_LB * 10) / 10;
+    if (unit === 'lb') return r1(lb) + ' lb';
+    var st = Math.floor(lb / 14), rest = Math.round((lb - st * 14) * 10) / 10;
+    if (rest >= 14) { st += 1; rest = 0; }
+    return st + ' st ' + r1(rest) + ' lb';
+  }
+  // Changes are small, so stone users see them in lb.
+  function fmtDelta(kgDelta, unit) {
+    var v = unit === 'kg' ? kgDelta : kgDelta / KG_PER_LB;
+    var rounded = Math.round(v * 10) / 10;
+    return (rounded > 0 ? '+' : rounded < 0 ? '−' : '') + r1(Math.abs(rounded)) + (unit === 'kg' ? ' kg' : ' lb');
+  }
+  function disp(kg, unit) { return unit === 'kg' ? kg : kg / KG_PER_LB; }
+  function tickLabel(v, unit) {
+    if (unit === 'st') { var st = Math.floor(v / 14); return st + 'st ' + Math.round(v - st * 14); }
+    return String(Math.round(v * 10) / 10);
+  }
+
+  function weightEntries() {
+    var w = state.weights || {};
+    return Object.keys(w).filter(function(k){ return typeof w[k] === 'number'; }).sort()
+      .map(function(k){ return { key: k, kg: w[k], d: dayNum(k) }; });
+  }
+
+  // Straight-line fit over the last 8 weeks (falls back to everything if that is too little).
+  function weightTrend(entries) {
+    var today = dayNum(todayStr());
+    var pts = entries.filter(function(e){ return e.d >= today - 56; });
+    if (pts.length < 2) pts = entries;
+    if (pts.length < 2 || pts[pts.length - 1].d - pts[0].d < 3) return null;
+    var n = pts.length, mx = 0, my = 0;
+    pts.forEach(function(p){ mx += p.d; my += p.kg; });
+    mx /= n; my /= n;
+    var sxx = 0, sxy = 0;
+    pts.forEach(function(p){ sxx += (p.d - mx) * (p.d - mx); sxy += (p.d - mx) * (p.kg - my); });
+    if (!sxx) return null;
+    var slope = sxy / sxx;
+    return { slope: slope, from: pts[0].d, at: function(d){ return my + slope * (d - mx); } };
+  }
+
+  function setupWeightFields() {
+    var unit = wtUnit();
+    Array.prototype.forEach.call(wtEl.wtUnitRow.querySelectorAll('[data-unit]'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-unit') === unit);
+    });
+    var labelA = unit === 'kg' ? 'Weight (kg)' : unit === 'lb' ? 'Weight (lb)' : 'Stone';
+    wtEl.wtLabelA.textContent = labelA;
+    wtEl.wtGoalLabelA.textContent = unit === 'st' ? 'Goal: stone' : 'Goal weight (' + unit + ')';
+    wtEl.wtFieldB.style.display = unit === 'st' ? '' : 'none';
+    wtEl.wtGoalFieldB.style.display = unit === 'st' ? '' : 'none';
+  }
+
+  function readWeightFields(a, b) {
+    var unit = wtUnit();
+    var av = a.value.trim(), bv = b.value.trim();
+    if (av === '' && (unit !== 'st' || bv === '')) return { empty: true };
+    var x = parseFloat(av === '' ? '0' : av), y = parseFloat(bv === '' ? '0' : bv);
+    if (isNaN(x) || isNaN(y) || x < 0 || y < 0) return { error: 'Enter a valid weight.' };
+    var kg = toKg(unit, x, y);
+    if (kg < 20 || kg > 400) return { error: 'That weight looks wrong. Check the number and unit.' };
+    return { kg: Math.round(kg * 1000) / 1000 };
+  }
+
+  function fillWeightFields(a, b, kg) {
+    var unit = wtUnit();
+    if (kg === null || kg === undefined) { a.value = ''; b.value = ''; return; }
+    if (unit === 'kg') { a.value = r1(kg); b.value = ''; return; }
+    var lb = Math.round(kg / KG_PER_LB * 10) / 10;
+    if (unit === 'lb') { a.value = r1(lb); b.value = ''; return; }
+    var st = Math.floor(lb / 14);
+    a.value = st; b.value = r1(Math.round((lb - st * 14) * 10) / 10);
+  }
+
+  wtEl.wtUnitRow.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-unit]');
+    if (!btn) return;
+    state.weightUnit = btn.getAttribute('data-unit');
+    save();
+    wtEl.wtA.value = ''; wtEl.wtB.value = '';
+    renderWeight();
+  });
+
+  wtEl.wtRangeRow.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-range]');
+    if (!btn) return;
+    weightUI.range = btn.getAttribute('data-range');
+    renderWeight();
+  });
+
+  wtEl.wtSave.addEventListener('click', function(){
+    var res = readWeightFields(wtEl.wtA, wtEl.wtB);
+    var dKey = wtEl.wtDate.value || todayStr();
+    if (dKey > todayStr()) { setWtMsg(wtEl.wtMsg, 'Pick today or an earlier date.', true); return; }
+    if (res.empty) { setWtMsg(wtEl.wtMsg, 'Enter your weight first.', true); return; }
+    if (res.error) { setWtMsg(wtEl.wtMsg, res.error, true); return; }
+    if (!state.weights) state.weights = {};
+    state.weights[dKey] = res.kg;
+    save();
+    wtEl.wtA.value = ''; wtEl.wtB.value = '';
+    renderWeight();
+    setWtMsg(wtEl.wtMsg, 'Saved ✓', false);
+  });
+
+  wtEl.wtGoalSave.addEventListener('click', function(){
+    var res = readWeightFields(wtEl.wtGoalA, wtEl.wtGoalB);
+    if (res.error) { setWtMsg(wtEl.wtGoalMsg, res.error, true); return; }
+    state.weightGoal = res.empty ? null : res.kg;
+    save();
+    renderWeight();
+    setWtMsg(wtEl.wtGoalMsg, res.empty ? 'Goal cleared.' : 'Goal saved ✓', false);
+  });
+
+  function setWtMsg(el, text, isErr) { el.textContent = text; el.classList.toggle('err', !!isErr); }
+
+  function drawWeightChart(entries, trend, goalKg, unit) {
+    var W = 340, H = 220, L = 44, R = 10, T = 12, B = 26;
+    var today = dayNum(todayStr());
+    var span = weightUI.range === '6m' ? 182 : weightUI.range === 'all' ? 100000 : 91;
+    var shown = entries.filter(function(e){ return e.d >= today - span; });
+    if (!shown.length) shown = entries.slice(-1);
+    var startD = shown[0].d - 3;
+    var endD = today + (trend ? 84 : 7);
+    var ys = shown.map(function(e){ return disp(e.kg, unit); });
+    if (goalKg) ys.push(disp(goalKg, unit));
+    if (trend) { ys.push(disp(trend.at(Math.max(startD, trend.from)), unit)); ys.push(disp(trend.at(endD), unit)); }
+    var lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+    var steps = unit === 'kg' ? [0.5, 1, 2, 5, 10, 20] : [1, 2, 5, 10, 20, 50];
+    var rough = Math.max((hi - lo) / 4, 0.01), step = steps[steps.length - 1];
+    for (var i = 0; i < steps.length; i++) { if (steps[i] >= rough) { step = steps[i]; break; } }
+    var yMin = Math.floor((lo - step * 0.3) / step) * step, yMax = Math.ceil((hi + step * 0.3) / step) * step;
+    if (yMax - yMin < step * 2) yMax = yMin + step * 2;
+    function X(d) { return L + (d - startD) / (endD - startD) * (W - L - R); }
+    function Y(v) { return T + (1 - (v - yMin) / (yMax - yMin)) * (H - T - B); }
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="wt-svg" role="img" aria-label="Weight chart">';
+    for (var t = yMin; t <= yMax + 1e-9; t += step) {
+      svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" class="wt-grid"/>' +
+             '<text x="' + (L - 6) + '" y="' + (Y(t) + 3.5) + '" text-anchor="end" class="wt-axis">' + tickLabel(t, unit) + '</text>';
+    }
+    svg += '<line x1="' + X(today) + '" x2="' + X(today) + '" y1="' + T + '" y2="' + (H - B) + '" class="wt-today"/>';
+    if (goalKg) {
+      var gy = Y(disp(goalKg, unit));
+      svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '" class="wt-goal"/>' +
+             '<text x="' + (W - R) + '" y="' + (gy - 4) + '" text-anchor="end" class="wt-goal-label">Goal</text>';
+    }
+    if (trend) {
+      var tf = Math.max(startD, trend.from);
+      svg += '<line x1="' + X(tf) + '" y1="' + Y(disp(trend.at(tf), unit)) + '" x2="' + X(today) + '" y2="' + Y(disp(trend.at(today), unit)) + '" class="wt-trend"/>' +
+             '<line x1="' + X(today) + '" y1="' + Y(disp(trend.at(today), unit)) + '" x2="' + X(endD) + '" y2="' + Y(disp(trend.at(endD), unit)) + '" class="wt-forecast"/>';
+    }
+    var path = shown.map(function(e, idx){ return (idx ? 'L' : 'M') + X(e.d).toFixed(1) + ' ' + Y(disp(e.kg, unit)).toFixed(1); }).join(' ');
+    svg += '<path d="' + path + '" class="wt-line"/>';
+    shown.forEach(function(e){ svg += '<circle cx="' + X(e.d).toFixed(1) + '" cy="' + Y(disp(e.kg, unit)).toFixed(1) + '" r="3.2" class="wt-dot"/>'; });
+    svg += '<text x="' + L + '" y="' + (H - 8) + '" class="wt-axis">' + niceDate(startD + 3) + '</text>' +
+           '<text x="' + X(today) + '" y="' + (H - 8) + '" text-anchor="middle" class="wt-axis">Today</text>' +
+           '<text x="' + (W - R) + '" y="' + (H - 8) + '" text-anchor="end" class="wt-axis">' + (trend ? niceDate(endD) : '') + '</text></svg>';
+    return svg;
+  }
+
+  function renderWeight() {
+    setupWeightFields();
+    var unit = wtUnit();
+    var today = todayStr(), todayN = dayNum(today);
+    wtEl.wtDate.max = today;
+    if (!wtEl.wtDate.value) wtEl.wtDate.value = today;
+    var entries = weightEntries();
+    var goalKg = typeof state.weightGoal === 'number' ? state.weightGoal : null;
+    if (document.activeElement !== wtEl.wtGoalA && document.activeElement !== wtEl.wtGoalB) fillWeightFields(wtEl.wtGoalA, wtEl.wtGoalB, goalKg);
+
+    // Weekly nudge
+    if (!entries.length) wtEl.wtDue.textContent = 'Add your first weigh-in to start tracking.';
+    else {
+      var since = todayN - entries[entries.length - 1].d;
+      wtEl.wtDue.textContent = since >= 7 ? 'Last weighed ' + since + ' days ago. Time for a weigh-in.' :
+        since === 0 ? 'Weighed today. Next weigh-in in a week.' : 'Last weighed ' + since + ' day' + (since === 1 ? '' : 's') + ' ago. Next weigh-in due in ' + (7 - since) + ' day' + (7 - since === 1 ? '' : 's') + '.';
+    }
+
+    Array.prototype.forEach.call(wtEl.wtRangeRow.querySelectorAll('[data-range]'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-range') === weightUI.range);
+    });
+
+    if (!entries.length) {
+      wtEl.wtStats.innerHTML = ''; wtEl.wtChart.innerHTML = ''; wtEl.wtForecast.innerHTML = ''; wtEl.wtHistory.innerHTML = '';
+      wtEl.wtRangeRow.style.display = 'none';
+      return;
+    }
+    wtEl.wtRangeRow.style.display = '';
+
+    var first = entries[0], last = entries[entries.length - 1], prev = entries.length > 1 ? entries[entries.length - 2] : null;
+    var trend = weightTrend(entries);
+    function tile(value, label) { return '<div class="drink-stat"><b>' + value + '</b><span>' + label + '</span></div>'; }
+    var toGo;
+    if (goalKg === null) toGo = tile('–', 'set a goal below');
+    else {
+      var diff = last.kg - goalKg;
+      toGo = Math.abs(diff) < 0.05 ? tile('🎯', 'goal reached') : tile(fmtDelta(Math.abs(diff), unit).replace(/^\+/, ''), diff > 0 ? 'to lose' : 'to gain');
+    }
+    wtEl.wtStats.innerHTML =
+      '<div class="drink-month-summary">' + tile(fmtWeight(last.kg, unit), 'current · ' + niceDate(last.d)) + toGo + '</div>' +
+      '<div class="drink-month-summary">' + tile(entries.length > 1 ? fmtDelta(last.kg - first.kg, unit) : '–', 'since ' + niceDate(first.d, true)) +
+        tile(trend ? fmtDelta(trend.slope * 7, unit) : '–', 'trend per week') + '</div>' +
+      '<div class="drink-month-summary">' + tile(prev ? fmtDelta(last.kg - prev.kg, unit) : '–', 'since last weigh-in') + tile(entries.length, 'weigh-in' + (entries.length === 1 ? '' : 's')) + '</div>';
+
+    wtEl.wtChart.innerHTML = drawWeightChart(entries, trend, goalKg, unit) +
+      '<div class="bb-legend"><span><i style="background:var(--lime)"></i>Weigh-ins</span>' +
+      (trend ? '<span><i style="background:var(--coral)"></i>Trend</span><span><i style="background:var(--violet)"></i>Forecast</span>' : '') +
+      (goalKg ? '<span><i style="background:var(--text-dim)"></i>Goal</span>' : '') + '</div>';
+
+    // Forecast text
+    var fx = '';
+    if (!trend) fx = 'Add a few weekly weigh-ins (at least two, a few days apart) to see a forecast.';
+    else {
+      var nowFit = trend.at(todayN);
+      var perWeek = trend.slope * 7;
+      fx = '<div class="wt-fc-row"><span>In 4 weeks</span><b>' + fmtWeight(trend.at(todayN + 28), unit) + '</b></div>' +
+           '<div class="wt-fc-row"><span>In 12 weeks</span><b>' + fmtWeight(trend.at(todayN + 84), unit) + '</b></div>';
+      var verdict;
+      if (goalKg === null) verdict = 'Set a goal weight to see when you would reach it.';
+      else if (Math.abs(last.kg - goalKg) < 0.05) verdict = 'You are at your goal weight.';
+      else {
+        var needDown = nowFit > goalKg;
+        var movingRight = needDown ? trend.slope < 0 : trend.slope > 0;
+        if (Math.abs(perWeek) < 0.05) verdict = 'Your weight is holding steady, so you will not reach your goal at this pace.';
+        else if (!movingRight) verdict = 'Your trend is moving away from your goal.';
+        else {
+          var days = Math.ceil((goalKg - nowFit) / trend.slope);
+          if (days <= 0) verdict = 'Your trend line has already reached your goal.';
+          else if (days > 1095) verdict = 'At this pace your goal is more than 3 years away.';
+          else verdict = 'At this pace you reach ' + fmtWeight(goalKg, unit) + ' around <b>' + niceDate(todayN + days, true) + '</b> (about ' + Math.max(1, Math.round(days / 7)) + ' weeks).';
+        }
+      }
+      fx += '<div class="day-hint" style="text-align:left;margin-top:10px;opacity:1;color:var(--text)">' + verdict + '</div>' +
+            '<div class="day-hint" style="text-align:left">A straight-line projection from your last 8 weeks of weigh-ins.</div>';
+    }
+    wtEl.wtForecast.innerHTML = '<div class="day-panel"><div class="day-panel-title">Forecast</div>' +
+      (trend ? '<div class="day-panel-sub">Trend ' + fmtDelta(trend.slope * 7, unit) + ' per week</div>' : '') + fx + '</div>';
+
+    // History
+    var list = entries.slice().reverse();
+    var shownList = weightUI.showAll ? list : list.slice(0, 8);
+    var hh = '<div class="section-label" style="margin-top:18px">Weigh-in history</div>';
+    shownList.forEach(function(e, idx){
+      var older = list[list.indexOf(e) + 1];
+      hh += '<div class="day-row done wt-row" data-key="' + e.key + '" style="cursor:pointer">' +
+        '<div class="name"><b>' + fmtWeight(e.kg, unit) + '</b><br><span style="color:var(--text-dim);font-size:12px">' + niceDate(e.d, true) +
+        (older ? ' · ' + fmtDelta(e.kg - older.kg, unit) : '') + '</span></div>' +
+        '<button class="task-del" data-del="' + e.key + '" aria-label="Delete weigh-in">×</button></div>';
+    });
+    if (list.length > 8) hh += '<button class="backup-btn" id="wtShowAll" type="button" style="width:100%">' + (weightUI.showAll ? 'Show fewer' : 'Show all ' + list.length) + '</button>';
+    hh += '<div class="day-hint">Tap a weigh-in to edit it.</div>';
+    wtEl.wtHistory.innerHTML = hh;
+  }
+
+  wtEl.wtHistory.addEventListener('click', function(e){
+    var del = e.target.closest('[data-del]');
+    if (del) {
+      e.stopPropagation();
+      var k = del.getAttribute('data-del');
+      if (window.confirm('Delete the weigh-in for ' + niceDate(dayNum(k), true) + '?')) {
+        delete state.weights[k];
+        save();
+        renderWeight();
+      }
+      return;
+    }
+    if (e.target.id === 'wtShowAll') { weightUI.showAll = !weightUI.showAll; renderWeight(); return; }
+    var row = e.target.closest('.wt-row');
+    if (row) {
+      var key = row.getAttribute('data-key');
+      wtEl.wtDate.value = key;
+      fillWeightFields(wtEl.wtA, wtEl.wtB, state.weights[key]);
+      setWtMsg(wtEl.wtMsg, 'Editing ' + niceDate(dayNum(key), true) + '. Change it and press Save.', false);
+      wtEl.wtA.focus();
+    }
+  });
 
   // ---- Backup & restore / import ----
   var restoreBtn = document.getElementById('restoreBtn');
