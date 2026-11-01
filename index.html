@@ -907,6 +907,8 @@
   .wt-fc-row { display: flex; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--text-dim); }
   .wt-fc-row b { color: var(--text); font-family: var(--font-head); }
   #weightView .day-panel { margin-top: 14px; }
+  #weightView .health-fields { flex-wrap: wrap; }
+  .wt-date-field { flex: 1 1 100% !important; }
 </style>
 </head>
 <body>
@@ -1080,7 +1082,7 @@
           <button class="tab-btn" data-unit="st" type="button">st + lb</button>
         </div>
         <div class="health-fields">
-          <label class="health-field"><span>Date</span>
+          <label class="health-field wt-date-field"><span>Date</span>
             <input id="wtDate" type="date" class="amount-input" /></label>
           <label class="health-field"><span id="wtLabelA">Weight (kg)</span>
             <input id="wtA" type="number" inputmode="decimal" min="0" step="0.1" class="amount-input" placeholder="e.g. 82.4" /></label>
@@ -1100,6 +1102,28 @@
       </div>
       <div id="wtChart"></div>
       <div id="wtForecast"></div>
+
+      <div class="day-panel">
+        <div class="day-panel-title">Daily calorie target</div>
+        <div class="day-panel-sub">Goes up with the miles you run each day.</div>
+        <div id="wtCalResults"></div>
+        <div class="health-field" style="margin-top:12px"><span>If I run this many miles</span>
+          <input id="wtPlanMiles" type="number" inputmode="decimal" min="0" step="0.5" class="amount-input" placeholder="e.g. 8" /></div>
+        <div class="day-hint" id="wtPlanOut" style="text-align:left;opacity:1;color:var(--text)"></div>
+        <div class="section-label" style="margin-top:16px">Your details</div>
+        <div class="health-fields">
+          <label class="health-field"><span>Height (ft)</span><input id="wtHFt" type="number" inputmode="numeric" min="3" max="7" step="1" class="amount-input" placeholder="5" /></label>
+          <label class="health-field"><span>Inches</span><input id="wtHIn" type="number" inputmode="decimal" min="0" max="11.9" step="0.5" class="amount-input" placeholder="9" /></label>
+          <label class="health-field"><span>Age</span><input id="wtAge" type="number" inputmode="numeric" min="14" max="100" step="1" class="amount-input" placeholder="38" /></label>
+        </div>
+        <div class="health-fields">
+          <label class="health-field"><span>Sex</span><select id="wtSex" class="cal-select"><option value="male">Male</option><option value="female">Female</option></select></label>
+          <label class="health-field"><span>Weight loss pace</span><select id="wtPace" class="cal-select">
+            <option value="0.5">0.5 lb a week</option><option value="1">1 lb a week</option><option value="1.5">1.5 lb a week</option><option value="2">2 lb a week</option></select></label>
+        </div>
+        <button class="add-btn-wide" id="wtProfSave" type="button">Save details</button>
+        <div class="day-hint" id="wtProfMsg"></div>
+      </div>
 
       <div class="day-panel">
         <div class="day-panel-title">Goal weight</div>
@@ -1213,6 +1237,8 @@
     Object.keys(parsed.weights).forEach(function(k){ if (typeof parsed.weights[k] !== 'number' || !isFinite(parsed.weights[k])) delete parsed.weights[k]; });
     if (typeof parsed.weightGoal !== 'number' || !isFinite(parsed.weightGoal)) parsed.weightGoal = null;
     if (parsed.weightUnit !== 'lb' && parsed.weightUnit !== 'st') parsed.weightUnit = 'kg';
+    if (!parsed.profile || typeof parsed.profile !== 'object' || typeof parsed.profile.heightCm !== 'number' || typeof parsed.profile.age !== 'number') parsed.profile = null;
+    if (typeof parsed.calPace !== 'number' || !(parsed.calPace > 0 && parsed.calPace <= 3)) parsed.calPace = 1;
     if (typeof parsed.updatedAt !== 'number') parsed.updatedAt = Date.now();
     return parsed;
   }
@@ -1291,6 +1317,8 @@
       weights: {},         // date -> kg
       weightGoal: null,    // kg
       weightUnit: 'kg',    // kg | lb | st
+      profile: null,       // {heightFt, heightIn, heightCm, age, sex} for the calorie target
+      calPace: 1,          // lb per week to lose
       celebratedDate: '',  // the day the "all done" celebration last played
       updatedAt: Date.now()
     };
@@ -2647,6 +2675,8 @@
     var labelA = unit === 'kg' ? 'Weight (kg)' : unit === 'lb' ? 'Weight (lb)' : 'Stone';
     wtEl.wtLabelA.textContent = labelA;
     wtEl.wtGoalLabelA.textContent = unit === 'st' ? 'Goal: stone' : 'Goal weight (' + unit + ')';
+    var ph = unit === 'kg' ? ['e.g. 82.4', '', 'e.g. 78'] : unit === 'lb' ? ['e.g. 181.5', '', 'e.g. 172'] : ['e.g. 13', 'e.g. 4', 'e.g. 12'];
+    wtEl.wtA.placeholder = ph[0]; wtEl.wtB.placeholder = ph[1]; wtEl.wtGoalA.placeholder = ph[2]; wtEl.wtGoalB.placeholder = 'e.g. 0';
     wtEl.wtFieldB.style.display = unit === 'st' ? '' : 'none';
     wtEl.wtGoalFieldB.style.display = unit === 'st' ? '' : 'none';
   }
@@ -2759,6 +2789,7 @@
 
   function renderWeight() {
     setupWeightFields();
+    renderCalories();
     var unit = wtUnit();
     var today = todayStr(), todayN = dayNum(today);
     wtEl.wtDate.max = today;
@@ -2873,6 +2904,86 @@
       wtEl.wtA.focus();
     }
   });
+
+  // ---- Daily calorie target (changes with the miles you run that day) ----
+  // Estimate: Mifflin-St Jeor resting burn x 1.2 for a non-running day, plus about
+  // 1.39 kcal per kg of bodyweight per mile run (about 0.63 per lb), minus your chosen deficit.
+  var calEl = {};
+  ['wtHFt','wtHIn','wtAge','wtSex','wtPace','wtProfSave','wtProfMsg','wtCalResults','wtPlanMiles','wtPlanOut'].forEach(function(id){ calEl[id] = document.getElementById(id); });
+
+  function calorieModel() {
+    var p = state.profile, entries = weightEntries();
+    if (!p || !p.heightCm || !p.age || !entries.length) return null;
+    var kg = entries[entries.length - 1].kg;
+    var bmr = 10 * kg + 6.25 * p.heightCm - 5 * p.age + (p.sex === 'female' ? -161 : 5);
+    var pace = typeof state.calPace === 'number' ? state.calPace : 1;
+    var m = { kg: kg, bmr: bmr, base: bmr * 1.2, perMile: 1.389 * kg, deficit: pace * 500, pace: pace, floor: p.sex === 'female' ? 1200 : 1500 };
+    m.maintenance = function(mi){ return m.base + m.perMile * mi; };
+    m.target = function(mi){ return Math.max(m.floor, Math.round((m.maintenance(mi) - m.deficit) / 10) * 10); };
+    return m;
+  }
+  function milesOnDay(key) {
+    return runsOn(key).reduce(function(a, r){ return a + r.distance; }, 0) / 1609.344;
+  }
+  function kcal(n) { return Math.round(n).toLocaleString(); }
+
+  calEl.wtProfSave.addEventListener('click', function(){
+    var ft = parseFloat(calEl.wtHFt.value), inch = parseFloat(calEl.wtHIn.value || '0'), age = parseInt(calEl.wtAge.value, 10);
+    if (isNaN(ft) || ft < 3 || ft > 7 || isNaN(inch) || inch < 0 || inch >= 12) { setWtMsg(calEl.wtProfMsg, 'Enter your height as feet and inches, e.g. 5 and 9.', true); return; }
+    if (isNaN(age) || age < 14 || age > 100) { setWtMsg(calEl.wtProfMsg, 'Enter your age (14 to 100).', true); return; }
+    state.profile = { heightFt: ft, heightIn: inch, heightCm: Math.round((ft * 12 + inch) * 2.54 * 10) / 10, age: age, sex: calEl.wtSex.value === 'female' ? 'female' : 'male' };
+    state.calPace = parseFloat(calEl.wtPace.value) || 1;
+    save();
+    renderWeight();
+    setWtMsg(calEl.wtProfMsg, 'Saved ✓', false);
+  });
+  calEl.wtPace.addEventListener('change', function(){
+    if (!state.profile) return;
+    state.calPace = parseFloat(calEl.wtPace.value) || 1;
+    save();
+    renderCalories();
+  });
+  calEl.wtPlanMiles.addEventListener('input', function(){ renderPlan(); });
+
+  function renderPlan() {
+    var m = calorieModel();
+    var mi = parseFloat(calEl.wtPlanMiles.value);
+    if (!m || isNaN(mi) || mi < 0) { calEl.wtPlanOut.textContent = ''; return; }
+    calEl.wtPlanOut.innerHTML = 'Eat about <b>' + kcal(m.target(mi)) + ' kcal</b> (you would burn about ' + kcal(m.maintenance(mi)) + ')';
+  }
+
+  function renderCalories() {
+    var p = state.profile;
+    var active = document.activeElement;
+    if (p && active !== calEl.wtHFt && active !== calEl.wtHIn && active !== calEl.wtAge) {
+      calEl.wtHFt.value = p.heightFt; calEl.wtHIn.value = p.heightIn || 0; calEl.wtAge.value = p.age; calEl.wtSex.value = p.sex === 'female' ? 'female' : 'male';
+    }
+    calEl.wtPace.value = String(typeof state.calPace === 'number' ? state.calPace : 1);
+    var m = calorieModel();
+    if (!m) {
+      calEl.wtCalResults.innerHTML = '<div class="day-hint" style="text-align:left">' +
+        (weightEntries().length ? 'Enter your details below to see your daily target.' : 'Add a weigh-in above and enter your details below to see your daily target.') + '</div>';
+      calEl.wtPlanOut.textContent = '';
+      return;
+    }
+    function tile(value, label) { return '<div class="drink-stat"><b>' + value + '</b><span>' + label + '</span></div>'; }
+    var todayKey = todayStr(), todayMi = milesOnDay(todayKey);
+    var weekMi = 0, weekTarget = 0;
+    for (var i = 1; i <= 7; i++) {
+      var mi = milesOnDay(keyOfDay(dayNum(todayKey) - i));
+      weekMi += mi; weekTarget += m.target(mi);
+    }
+    var rows = [0, 4, 6, 8, 10, 12].map(function(mi){
+      return '<div class="wt-fc-row"><span>' + (mi === 0 ? 'Rest day' : mi + ' mile run') + '</span><b>' + kcal(m.target(mi)) + ' kcal</b></div>';
+    }).join('');
+    calEl.wtCalResults.innerHTML =
+      '<div class="drink-month-summary">' + tile(kcal(m.target(todayMi)), 'today\'s target' + (todayMi > 0 ? ' · ' + (Math.round(todayMi * 10) / 10) + ' mi run' : ' · no run yet')) +
+        tile(kcal(m.maintenance(todayMi)), 'estimated burn today') + '</div>' +
+      '<div class="drink-month-summary">' + tile(kcal(weekTarget / 7), 'average target, last 7 days') + tile((Math.round(weekMi * 10) / 10) + ' mi', 'run in the last 7 days') + '</div>' +
+      '<div style="margin-top:12px">' + rows + '</div>' +
+      '<div class="day-hint" style="text-align:left;margin-top:10px">Based on ' + fmtWeight(m.kg, wtUnit()) + ', a ' + (m.pace * 1) + ' lb a week deficit (about ' + kcal(m.deficit) + ' kcal a day) and about ' + kcal(m.perMile) + ' kcal per mile run. Floor: ' + kcal(m.floor) + ' kcal. Compare with your weekly trend and adjust if it is off.</div>';
+    renderPlan();
+  }
 
   // ---- Backup & restore / import ----
   var restoreBtn = document.getElementById('restoreBtn');
