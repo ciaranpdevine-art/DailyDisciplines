@@ -906,7 +906,7 @@
   .wt-goal-label { fill: var(--text-dim); font-size: 9.5px; font-family: var(--font-head); }
   .wt-fc-row { display: flex; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--text-dim); }
   .wt-fc-row b { color: var(--text); font-family: var(--font-head); }
-  #weightView .day-panel { margin-top: 14px; }
+  #weightView .day-panel, #calLogView .day-panel { margin-top: 14px; }
   #weightView .health-fields { flex-wrap: wrap; }
   .wt-date-field { flex: 1 1 100% !important; }
 </style>
@@ -1039,9 +1039,10 @@
   <div id="healthView" style="display:none">
     <div class="tabs" id="healthMetricRow">
       <button class="tab-btn active" data-metric="steps" type="button">Steps</button>
-      <button class="tab-btn" data-metric="battery" type="button">Body battery</button>
+      <button class="tab-btn" data-metric="battery" type="button">Battery</button>
       <button class="tab-btn" data-metric="running" type="button">Running</button>
       <button class="tab-btn" data-metric="weight" type="button">Weight</button>
+      <button class="tab-btn" data-metric="calories" type="button">Calories</button>
     </div>
     <div id="healthMain">
     <div class="cal-card">
@@ -1070,6 +1071,33 @@
       <div class="day-hint" id="healthMsg"></div>
       <div class="day-hint" id="healthSource"></div>
     </div>
+    </div>
+
+    <div id="calLogView" style="display:none">
+      <div class="cal-card">
+        <div class="cal-nav">
+          <button id="kcPrev" aria-label="Previous month">‹</button>
+          <span id="kcMonthLabel">Month Year</span>
+          <button id="kcNext" aria-label="Next month">›</button>
+        </div>
+        <div class="cal-weekdays">
+          <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+        </div>
+        <div class="cal-grid" id="kcGrid"></div>
+      </div>
+      <div id="kcLegend"></div>
+      <div id="kcSummary"></div>
+      <div class="day-panel">
+        <div class="day-panel-title" id="kcDayTitle">Today</div>
+        <div class="day-panel-sub">Enter the calories you ate, then Save. Clear the box to remove it.</div>
+        <div class="health-fields">
+          <label class="health-field"><span>Calories eaten</span>
+            <input id="kcInput" type="number" inputmode="numeric" min="0" step="10" class="amount-input" placeholder="e.g. 2300" /></label>
+        </div>
+        <button class="add-btn-wide" id="kcSave" type="button">Save</button>
+        <div class="day-hint" id="kcMsg"></div>
+        <div id="kcBreakdown" style="margin-top:8px"></div>
+      </div>
     </div>
 
     <div id="weightView" style="display:none">
@@ -1238,6 +1266,8 @@
     if (typeof parsed.weightGoal !== 'number' || !isFinite(parsed.weightGoal)) parsed.weightGoal = null;
     if (parsed.weightUnit !== 'lb' && parsed.weightUnit !== 'st') parsed.weightUnit = 'kg';
     if (!parsed.profile || typeof parsed.profile !== 'object' || typeof parsed.profile.heightCm !== 'number' || typeof parsed.profile.age !== 'number') parsed.profile = null;
+    if (!parsed.calories || typeof parsed.calories !== 'object') parsed.calories = {};
+    Object.keys(parsed.calories).forEach(function(k){ if (typeof parsed.calories[k] !== 'number' || !isFinite(parsed.calories[k])) delete parsed.calories[k]; });
     if (typeof parsed.calPace !== 'number' || !(parsed.calPace > 0 && parsed.calPace <= 3)) parsed.calPace = 1;
     if (typeof parsed.updatedAt !== 'number') parsed.updatedAt = Date.now();
     return parsed;
@@ -1319,6 +1349,7 @@
       weightUnit: 'kg',    // kg | lb | st
       profile: null,       // {heightFt, heightIn, heightCm, age, sex} for the calorie target
       calPace: 1,          // lb per week to lose
+      calories: {},        // date -> kcal eaten
       celebratedDate: '',  // the day the "all done" celebration last played
       updatedAt: Date.now()
     };
@@ -2475,10 +2506,12 @@
     Array.prototype.forEach.call(healthMetricRow.querySelectorAll('[data-metric]'), function(b){
       b.classList.toggle('active', b.getAttribute('data-metric') === metric);
     });
-    var isWeight = metric === 'weight';
-    document.getElementById('healthMain').style.display = isWeight ? 'none' : '';
+    var isWeight = metric === 'weight', isCalLog = metric === 'calories';
+    document.getElementById('healthMain').style.display = (isWeight || isCalLog) ? 'none' : '';
     document.getElementById('weightView').style.display = isWeight ? '' : 'none';
+    document.getElementById('calLogView').style.display = isCalLog ? '' : 'none';
     if (isWeight) { renderWeight(); return; }
+    if (isCalLog) { renderCalLog(); return; }
 
     var monthDate = new Date(healthState.year, healthState.month, 1);
     healthCalMonthLabel.textContent = monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -2911,16 +2944,19 @@
   var calEl = {};
   ['wtHFt','wtHIn','wtAge','wtSex','wtPace','wtProfSave','wtProfMsg','wtCalResults','wtPlanMiles','wtPlanOut'].forEach(function(id){ calEl[id] = document.getElementById(id); });
 
-  function calorieModel() {
-    var p = state.profile, entries = weightEntries();
-    if (!p || !p.heightCm || !p.age || !entries.length) return null;
-    var kg = entries[entries.length - 1].kg;
+  function modelForKg(kg) {
+    var p = state.profile;
     var bmr = 10 * kg + 6.25 * p.heightCm - 5 * p.age + (p.sex === 'female' ? -161 : 5);
     var pace = typeof state.calPace === 'number' ? state.calPace : 1;
     var m = { kg: kg, bmr: bmr, base: bmr * 1.2, perMile: 1.389 * kg, deficit: pace * 500, pace: pace, floor: p.sex === 'female' ? 1200 : 1500 };
     m.maintenance = function(mi){ return m.base + m.perMile * mi; };
     m.target = function(mi){ return Math.max(m.floor, Math.round((m.maintenance(mi) - m.deficit) / 10) * 10); };
     return m;
+  }
+  function calorieModel() {
+    var p = state.profile, entries = weightEntries();
+    if (!p || !p.heightCm || !p.age || !entries.length) return null;
+    return modelForKg(entries[entries.length - 1].kg);
   }
   function milesOnDay(key) {
     return runsOn(key).reduce(function(a, r){ return a + r.distance; }, 0) / 1609.344;
@@ -2983,6 +3019,152 @@
       '<div style="margin-top:12px">' + rows + '</div>' +
       '<div class="day-hint" style="text-align:left;margin-top:10px">Based on ' + fmtWeight(m.kg, wtUnit()) + ', a ' + (m.pace * 1) + ' lb a week deficit (about ' + kcal(m.deficit) + ' kcal a day) and about ' + kcal(m.perMile) + ' kcal per mile run. Floor: ' + kcal(m.floor) + ' kcal. Compare with your weekly trend and adjust if it is off.</div>';
     renderPlan();
+  }
+
+  // ---- Calories tab: calories eaten each day vs an estimate of what you burned ----
+  var kcState = { year: now.getFullYear(), month: now.getMonth(), selectedDate: todayStr() };
+  var kcEl = {};
+  ['kcPrev','kcNext','kcMonthLabel','kcGrid','kcLegend','kcSummary','kcDayTitle','kcInput','kcSave','kcMsg','kcBreakdown'].forEach(function(id){ kcEl[id] = document.getElementById(id); });
+
+  // Weight used for a day: the latest weigh-in on or before it (else the earliest one).
+  function weightAtDate(key) {
+    var entries = weightEntries();
+    if (!entries.length) return null;
+    var kg = entries[0].kg;
+    entries.forEach(function(e){ if (e.key <= key) kg = e.kg; });
+    return kg;
+  }
+  function dayBurn(key) {
+    var p = state.profile, kg = weightAtDate(key);
+    if (!p || !p.heightCm || !p.age || kg === null) return null;
+    var m = modelForKg(kg), miles = milesOnDay(key);
+    return { model: m, miles: miles, rest: m.base, run: m.perMile * miles, total: m.maintenance(miles), kg: kg };
+  }
+  function deficitBand(def, target) {
+    return def >= target ? 'bb-4' : def >= target / 2 ? 'bb-3' : def >= 0 ? 'bb-2' : 'bb-1';
+  }
+
+  kcEl.kcPrev.addEventListener('click', function(){ changeKcMonth(-1); });
+  kcEl.kcNext.addEventListener('click', function(){ changeKcMonth(1); });
+  function changeKcMonth(delta) {
+    kcState.month += delta;
+    if (kcState.month < 0) { kcState.month = 11; kcState.year -= 1; }
+    if (kcState.month > 11) { kcState.month = 0; kcState.year += 1; }
+    renderCalLog();
+  }
+
+  kcEl.kcSave.addEventListener('click', function(){
+    var raw = kcEl.kcInput.value.trim();
+    var key = kcState.selectedDate;
+    if (!state.calories) state.calories = {};
+    if (raw === '') {
+      delete state.calories[key];
+      save(); renderCalLog(); setWtMsg(kcEl.kcMsg, 'Cleared.', false);
+      return;
+    }
+    var n = Math.round(parseFloat(raw));
+    if (isNaN(n) || n < 0 || n > 20000) { setWtMsg(kcEl.kcMsg, 'Enter calories as a number, 0 to 20,000.', true); return; }
+    state.calories[key] = n;
+    save(); renderCalLog(); setWtMsg(kcEl.kcMsg, 'Saved ✓', false);
+  });
+
+  function renderCalLog() {
+    var unit = wtUnit();
+    var todayKey = todayStr();
+    var cal = state.calories || {};
+    var pace = typeof state.calPace === 'number' ? state.calPace : 1;
+    var target = pace * 500;
+    var hasProfile = !!(state.profile && state.profile.heightCm && weightEntries().length);
+
+    var monthDate = new Date(kcState.year, kcState.month, 1);
+    kcEl.kcMonthLabel.textContent = monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    var firstWeekday = (monthDate.getDay() + 6) % 7;
+    var daysInMonth = new Date(kcState.year, kcState.month + 1, 0).getDate();
+    kcEl.kcGrid.innerHTML = '';
+    for (var p = 0; p < firstWeekday; p++) {
+      var pad = document.createElement('div'); pad.className = 'cal-day pad'; kcEl.kcGrid.appendChild(pad);
+    }
+
+    var logged = [], counts = { 'bb-4': 0, 'bb-3': 0, 'bb-2': 0, 'bb-1': 0 }, totalIntake = 0, totalDef = 0, defDays = 0, perDay = [];
+    for (var day = 1; day <= daysInMonth; day++) {
+      var key = kcState.year + '-' + String(kcState.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+      var eaten = typeof cal[key] === 'number' ? cal[key] : null;
+      var burn = eaten !== null ? dayBurn(key) : null;
+      var band = '';
+      if (eaten !== null) {
+        logged.push(eaten); totalIntake += eaten;
+        if (burn) {
+          var def = burn.total - eaten;
+          totalDef += def; defDays++;
+          band = deficitBand(def, target);
+          counts[band]++;
+        }
+      }
+      perDay.push({ key: key, v: eaten });
+      var isFuture = key > todayKey;
+      var cell = document.createElement('div');
+      cell.className = 'cal-day' + (eaten !== null ? ' done' : '') + (band ? ' ' + band : '') + (key === todayKey ? ' today' : '') +
+        (key === kcState.selectedDate ? ' selected' : '') + (isFuture ? ' future' : '');
+      cell.textContent = day;
+      if (eaten !== null) {
+        var badge = document.createElement('span'); badge.className = 'cal-day-badge'; badge.textContent = shortAmt(eaten); cell.appendChild(badge);
+      }
+      if (!isFuture) {
+        cell.addEventListener('click', function(k){ return function(){ kcState.selectedDate = k; setWtMsg(kcEl.kcMsg, '', false); renderCalLog(); }; }(key));
+      }
+      kcEl.kcGrid.appendChild(cell);
+    }
+
+    // Legend with counts
+    var t = Math.round(target);
+    var bands = [['bb-4', 'var(--lime)', 'On target (' + t + '+)'], ['bb-3', '#5EC8B6', 'Half way (' + Math.round(t / 2) + '+)'], ['bb-2', '#F2C14E', 'Small deficit'], ['bb-1', '#FF8A73', 'Surplus']];
+    kcEl.kcLegend.innerHTML = hasProfile ? '<div class="bb-legend">' + bands.map(function(bd){
+      var c = counts[bd[0]];
+      return '<span><i style="background:' + bd[1] + '"></i>' + bd[2] + ' · <b>' + c + '</b> day' + (c === 1 ? '' : 's') + '</span>';
+    }).join('') + '</div>' : '<div class="day-hint">Add your details in Weight → Daily calorie target to colour days by deficit.</div>';
+
+    // Month summary
+    function tile(value, label) { return '<div class="drink-stat"><b>' + value + '</b><span>' + label + '</span></div>'; }
+    var n = logged.length;
+    var fat = totalDef / (unit === 'kg' ? 7700 : 3500);
+    var fatStr = (fat < 0 ? '+' : '') + r1(Math.abs(fat)) + (unit === 'kg' ? ' kg' : ' lb');
+    var html = '<div class="drink-month-summary">' + tile(n ? kcal(totalIntake / n) : '–', 'average eaten per day') + tile(n, 'day' + (n === 1 ? '' : 's') + ' logged') + '</div>';
+    if (defDays) {
+      html += '<div class="drink-month-summary">' + tile(kcal(totalDef), 'total deficit this month') + tile(kcal(totalDef / defDays), 'average daily deficit') + '</div>' +
+              '<div class="drink-month-summary">' + tile(fatStr, totalDef >= 0 ? 'estimated fat lost' : 'estimated gain') + tile(counts['bb-4'] + ' / ' + defDays, 'days on target') + '</div>';
+    }
+    var hi = n ? Math.max.apply(null, logged) : 1;
+    html += '<div class="amount-bars">' + perDay.map(function(d){
+      var h = d.v === null ? 0 : Math.max(4, Math.round(d.v / hi * 100));
+      return '<div class="amount-bar-col' + (d.key === todayKey ? ' today' : '') + '"><div class="amount-bar" style="height:' + h + '%"></div></div>';
+    }).join('') + '</div><div class="amount-bars-axis"><span>1</span><span>' + daysInMonth + '</span></div>';
+    kcEl.kcSummary.innerHTML = html;
+
+    // Day panel
+    var sel = kcState.selectedDate;
+    kcEl.kcDayTitle.textContent = (sel === todayKey ? 'Today — ' : '') + dateFromKey(sel).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+    if (document.activeElement !== kcEl.kcInput) kcEl.kcInput.value = typeof cal[sel] === 'number' ? cal[sel] : '';
+    var burnSel = dayBurn(sel);
+    var eatenSel = typeof cal[sel] === 'number' ? cal[sel] : null;
+    var bd = '';
+    if (!burnSel) {
+      bd = '<div class="day-hint" style="text-align:left">' + (state.profile ? 'Add a weigh-in in the Weight tab' : 'Add your height and age in Weight → Daily calorie target → Your details') + ' to see your deficit.</div>';
+    } else {
+      function row(a, b, strong) { return '<div class="wt-fc-row"><span>' + a + '</span><b' + (strong ? ' style="color:var(--lime)"' : '') + '>' + b + '</b></div>'; }
+      bd = row('Resting + daily life', kcal(burnSel.rest) + ' kcal') +
+           row('Running (' + (Math.round(burnSel.miles * 10) / 10) + ' mi)', burnSel.miles > 0 ? kcal(burnSel.run) + ' kcal' : '0 kcal') +
+           row('Estimated burn', kcal(burnSel.total) + ' kcal');
+      if (eatenSel !== null) {
+        var d2 = burnSel.total - eatenSel;
+        bd += row('You ate', kcal(eatenSel) + ' kcal') +
+              '<div class="wt-fc-row"><span><b style="color:var(--text)">' + (d2 >= 0 ? 'Deficit' : 'Surplus') + '</b></span><b style="color:' + (d2 >= target ? 'var(--lime)' : d2 >= 0 ? '#F2C14E' : '#FF8A73') + '">' + kcal(Math.abs(d2)) + ' kcal</b></div>' +
+              '<div class="day-hint" style="text-align:left">Your target deficit is about ' + kcal(target) + ' kcal a day. ' + (d2 >= target ? 'On target.' : d2 >= 0 ? 'Below your target.' : 'Above what you burned.') + '</div>';
+      } else {
+        bd += '<div class="day-hint" style="text-align:left">Target to eat: about ' + kcal(burnSel.model.target(burnSel.miles)) + ' kcal for a ' + (Math.round(burnSel.miles * 10) / 10) + ' mile day.</div>';
+      }
+      bd += '<div class="day-hint" style="text-align:left">Uses your weight of ' + fmtWeight(burnSel.kg, unit) + ' on this date.' + (sel === todayKey ? ' Today counts only the miles synced so far.' : '') + ' It is an estimate, so compare it with your weekly weight trend.</div>';
+    }
+    kcEl.kcBreakdown.innerHTML = bd;
   }
 
   // ---- Backup & restore / import ----
