@@ -2,7 +2,7 @@ name: Sync Garmin data
 
 on:
   schedule:
-    - cron: '20 7,12,18,22 * * *'   # a few times a day (UTC)
+    - cron: '20 6,9,12,15,18,21 * * *'   # every 3 hours through the day (UTC)
   workflow_dispatch:
     inputs:
       debug:
