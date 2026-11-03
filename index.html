@@ -892,6 +892,17 @@
   .health-field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-dim); }
   .health-field .amount-input { width: 100%; }
   .day-hint.err { color: #FF8A8A; opacity: 1; }
+  .sync-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .sync-btn { flex-shrink: 0; border: 1.5px solid var(--lime); background: transparent; color: var(--lime); font-family: var(--font-head); font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+  .sync-btn:active { transform: scale(0.95); }
+  .sync-btn:disabled { opacity: 0.5; }
+  .sync-status { flex: 1; min-width: 0; font-size: 12px; color: var(--text-dim); line-height: 1.3; }
+  .sync-link { flex-shrink: 0; border: none; background: none; color: var(--violet); font-family: var(--font-head); font-size: 12px; cursor: pointer; padding: 6px 2px; }
+  .sync-setup { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px; margin-bottom: 14px; }
+  .sync-steps { margin: 10px 0 12px 18px; padding: 0; font-size: 13px; line-height: 1.45; color: var(--text-dim); }
+  .sync-steps li { margin-bottom: 6px; }
+  .sync-steps b { color: var(--text); font-weight: 600; }
+  .sync-steps a { color: var(--violet); }
   .wt-units, .wt-range { margin: 10px 0 4px; }
   .wt-range { margin: 14px 0 6px; }
   .wt-svg { width: 100%; height: auto; display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
@@ -1037,6 +1048,27 @@
   </div>
 
   <div id="healthView" style="display:none">
+    <div class="sync-bar">
+      <button class="sync-btn" id="syncBtn" type="button">Sync now</button>
+      <span class="sync-status" id="syncStatus"></span>
+      <button class="sync-link" id="syncSetupToggle" type="button">Set up</button>
+    </div>
+    <div class="sync-setup" id="syncSetup" style="display:none">
+      <div class="day-panel-title">Let the app start a Garmin sync</div>
+      <ol class="sync-steps">
+        <li>On GitHub open <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</b> (or <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">tap here</a>).</li>
+        <li>Name it, set an expiry (90 days or longer), and under <b>Repository access</b> choose <b>Only select repositories → DailyDisciplines</b>.</li>
+        <li>Under <b>Permissions → Repository permissions</b> set <b>Actions</b> to <b>Read and write</b>. Leave everything else off.</li>
+        <li>Generate, copy the token (starts with <b>github_pat_</b>) and paste it below.</li>
+      </ol>
+      <input id="syncTokenInput" type="password" autocomplete="off" class="group-name-input" placeholder="github_pat_…" />
+      <div class="backup-btn-row" style="margin-top:10px">
+        <button class="backup-btn" id="syncTokenSave" type="button">Save token</button>
+        <button class="backup-btn" id="syncTokenRemove" type="button">Remove token</button>
+      </div>
+      <div class="day-hint" id="syncMsg"></div>
+      <div class="day-hint" style="text-align:left">The token is kept only on this phone. It can only start the sync, nothing else.</div>
+    </div>
     <div class="tabs" id="healthMetricRow">
       <button class="tab-btn active" data-metric="steps" type="button">Steps</button>
       <button class="tab-btn" data-metric="battery" type="button">Battery</button>
@@ -2381,6 +2413,7 @@
   var GARMIN_CACHE_KEY = 'daily_disciplines_garmin_cache';
   var garminDays = {};
   var garminRuns = {};
+  var garminUpdatedAt = 0;
   var GARMIN_RUNS_KEY = 'daily_disciplines_garmin_runs';
   try {
     var cachedRuns = JSON.parse(localStorage.getItem(GARMIN_RUNS_KEY) || 'null');
@@ -2399,9 +2432,14 @@
         var data = snap.data();
         garminDays = (data && data.days && typeof data.days === 'object') ? data.days : {};
         garminRuns = (data && data.runs && typeof data.runs === 'object') ? data.runs : {};
+        if (data && typeof data.updatedAt === 'number') {
+          garminUpdatedAt = data.updatedAt;
+          try { localStorage.setItem(GARMIN_UPDATED_KEY, String(garminUpdatedAt)); } catch (e) {}
+        }
         try { localStorage.setItem(GARMIN_CACHE_KEY, JSON.stringify(garminDays)); } catch (e) {}
         try { localStorage.setItem(GARMIN_RUNS_KEY, JSON.stringify(garminRuns)); } catch (e) {}
         renderHealthTab();
+        if (typeof onGarminUpdated === 'function') onGarminUpdated();
       }, function(){ /* offline or no access: the cached copy keeps working */ });
     } catch (e) {}
   }
@@ -3166,6 +3204,102 @@
     }
     kcEl.kcBreakdown.innerHTML = bd;
   }
+
+  // ---- "Sync now" button: starts the Garmin sync job on GitHub ----
+  // The token lives only in this browser's localStorage (never in the synced app data).
+  var GH_REPO = 'ciaranpdevine-art/DailyDisciplines';
+  var GH_WORKFLOW = 'garmin-sync.yml';
+  var GH_TOKEN_KEY = 'daily_disciplines_gh_token';
+  var GARMIN_UPDATED_KEY = 'daily_disciplines_garmin_updated';
+  var syncEl = {};
+  ['syncBtn','syncStatus','syncSetupToggle','syncSetup','syncTokenInput','syncTokenSave','syncTokenRemove','syncMsg'].forEach(function(id){ syncEl[id] = document.getElementById(id); });
+  var syncRequestedAt = 0, syncStatusOverride = '';
+  try { garminUpdatedAt = parseInt(localStorage.getItem(GARMIN_UPDATED_KEY) || '0', 10) || 0; } catch (e) {}
+
+  function ghToken() { try { return localStorage.getItem(GH_TOKEN_KEY) || ''; } catch (e) { return ''; } }
+  function agoText(ms) {
+    var mins = Math.round((Date.now() - ms) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + ' min ago';
+    var h = Math.floor(mins / 60);
+    if (h < 24) return h + ' hour' + (h === 1 ? '' : 's') + ' ago';
+    var d = Math.floor(h / 24);
+    return d + ' day' + (d === 1 ? '' : 's') + ' ago';
+  }
+  function updateSyncStatus() {
+    if (syncStatusOverride) { syncEl.syncStatus.textContent = syncStatusOverride; return; }
+    syncEl.syncStatus.textContent = garminUpdatedAt ? 'Garmin data updated ' + agoText(garminUpdatedAt) : 'Garmin data: not synced yet';
+  }
+  function setSyncOverride(text, ms) {
+    syncStatusOverride = text;
+    updateSyncStatus();
+    if (ms) setTimeout(function(){ if (syncStatusOverride === text) { syncStatusOverride = ''; updateSyncStatus(); } }, ms);
+  }
+  function onGarminUpdated() {
+    if (syncRequestedAt && garminUpdatedAt >= syncRequestedAt - 5000) {
+      syncRequestedAt = 0;
+      setSyncOverride('Updated ✓ new data is in', 6000);
+    } else {
+      updateSyncStatus();
+    }
+  }
+  function showSetup(show, note) {
+    syncEl.syncSetup.style.display = show ? '' : 'none';
+    syncEl.syncSetupToggle.textContent = show ? 'Hide setup' : (ghToken() ? 'Token ✓' : 'Set up');
+    if (note) setWtMsg(syncEl.syncMsg, note, true);
+  }
+
+  syncEl.syncSetupToggle.addEventListener('click', function(){
+    showSetup(syncEl.syncSetup.style.display === 'none');
+    setWtMsg(syncEl.syncMsg, '', false);
+  });
+  syncEl.syncTokenSave.addEventListener('click', function(){
+    var tok = syncEl.syncTokenInput.value.trim();
+    if (!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(tok)) { setWtMsg(syncEl.syncMsg, 'That does not look like a GitHub token. It starts with github_pat_.', true); return; }
+    try { localStorage.setItem(GH_TOKEN_KEY, tok); } catch (e) { setWtMsg(syncEl.syncMsg, 'Could not save the token on this device.', true); return; }
+    syncEl.syncTokenInput.value = '';
+    showSetup(false);
+    setSyncOverride('Token saved. Tap Sync now.', 5000);
+  });
+  syncEl.syncTokenRemove.addEventListener('click', function(){
+    try { localStorage.removeItem(GH_TOKEN_KEY); } catch (e) {}
+    showSetup(true);
+    setWtMsg(syncEl.syncMsg, 'Token removed from this device.', false);
+  });
+
+  var syncCooldown = false;
+  syncEl.syncBtn.addEventListener('click', function(){
+    var tok = ghToken();
+    if (!tok) { showSetup(true, 'Add your GitHub token first (steps below).'); return; }
+    if (syncCooldown) return;
+    syncCooldown = true; syncEl.syncBtn.disabled = true;
+    setTimeout(function(){ syncCooldown = false; syncEl.syncBtn.disabled = false; }, 20000);
+    syncRequestedAt = Date.now();
+    setSyncOverride('Starting sync…');
+    fetch('https://api.github.com/repos/' + GH_REPO + '/actions/workflows/' + GH_WORKFLOW + '/dispatches', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: 'main' })
+    }).then(function(res){
+      if (res.status === 204) {
+        setSyncOverride('Sync started. New data shows in about a minute.');
+        setTimeout(function(){ if (syncRequestedAt) { syncRequestedAt = 0; setSyncOverride('', 0); } }, 180000);
+        return;
+      }
+      syncRequestedAt = 0;
+      var why = res.status === 401 ? 'GitHub rejected the token. It may have expired: make a new one.' :
+        (res.status === 403 || res.status === 404) ? 'The token cannot start the sync. Check it has Actions: Read and write on this repository.' :
+        'GitHub returned an error (' + res.status + '). Try again shortly.';
+      setSyncOverride('', 0);
+      showSetup(true, why);
+    }).catch(function(){
+      syncRequestedAt = 0;
+      setSyncOverride('Could not reach GitHub. Check your connection.', 6000);
+    });
+  });
+  showSetup(false);
+  updateSyncStatus();
+  setInterval(function(){ if (!syncStatusOverride) updateSyncStatus(); }, 30000);
 
   // ---- Backup & restore / import ----
   var restoreBtn = document.getElementById('restoreBtn');
