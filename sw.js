@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daily-disciplines-v13';
+const CACHE_NAME = 'daily-disciplines-v14';
 const ASSETS = [
   './',
   './index.html',
@@ -39,7 +39,7 @@ self.addEventListener('fetch', function (event) {
     // Network-first for the app itself: always try to get the latest version.
     // Only fall back to whatever's cached if there's no connection at all.
     event.respondWith(
-      fetch(event.request).then(function (networkRes) {
+      fetch(event.request, { cache: 'no-cache' }).then(function (networkRes) {
         var clone = networkRes.clone();
         caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, clone); });
         return networkRes;
