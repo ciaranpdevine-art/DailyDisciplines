@@ -892,6 +892,13 @@
   .health-field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-dim); }
   .health-field .amount-input { width: 100%; }
   .day-hint.err { color: #FF8A8A; opacity: 1; }
+  .top { gap: 10px; align-items: center; }
+  .top-title { flex: 1; min-width: 0; }
+  .add-fab { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--lime); background: transparent; color: var(--lime); font-family: var(--font-head); font-size: 26px; line-height: 1; padding: 0 0 3px; cursor: pointer; }
+  .add-fab:active { transform: scale(0.92); }
+  .add-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .add-back { border: 1px solid var(--line); background: var(--surface); color: var(--text); font-family: var(--font-head); font-weight: 600; font-size: 13.5px; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+  .add-title { font-family: var(--font-head); font-weight: 600; font-size: 15px; }
   .sync-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .sync-btn { flex-shrink: 0; border: 1.5px solid var(--lime); background: transparent; color: var(--lime); font-family: var(--font-head); font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
   .sync-btn:active { transform: scale(0.95); }
@@ -930,6 +937,7 @@
       <h1>Daily Disciplines</h1>
       <p id="dateLabel">Today</p>
     </div>
+    <button class="add-fab" id="openAddBtn" type="button" aria-label="Add or manage disciplines">+</button>
     <div class="count-pill" id="countPill">
       <b id="headerDone">0/0</b>
       <span>done today</span>
@@ -938,9 +946,8 @@
 
   <div class="tabs" id="tabs">
     <button class="tab-btn active" data-tab="today" id="tabTodayBtn">Today</button>
-    <button class="tab-btn" data-tab="add" id="tabAddBtn">Add</button>
     <button class="tab-btn" data-tab="calendar" id="tabCalendarBtn">Calendar</button>
-    <button class="tab-btn" data-tab="drinks" id="tabDrinksBtn">Drinks</button>
+    <button class="tab-btn" data-tab="weight" id="tabWeightBtn">Weight</button>
     <button class="tab-btn" data-tab="health" id="tabHealthBtn">Health</button>
   </div>
 
@@ -964,6 +971,10 @@
   </div>
 
   <div id="addView" style="display:none">
+    <div class="add-head">
+      <button class="add-back" id="addBackBtn" type="button">‹ Back</button>
+      <div class="add-title">Add &amp; manage disciplines</div>
+    </div>
     <div class="add-card">
       <input id="taskInput" type="text" class="group-name-input" placeholder="What's the discipline? (e.g. Cold shower)" maxlength="80" />
       <input id="taskCategoryInput" type="text" list="categoryOptions" class="group-name-input" placeholder="Category (optional, e.g. Morning)" maxlength="30" style="margin-top:8px;" />
@@ -1013,40 +1024,6 @@
     </div>
   </div>
 
-  <div id="drinksView" style="display:none">
-    <div class="cal-card">
-      <div class="cal-nav">
-        <button id="drinkCalPrev" aria-label="Previous month">‹</button>
-        <span id="drinkCalMonthLabel">Month Year</span>
-        <button id="drinkCalNext" aria-label="Next month">›</button>
-      </div>
-      <div class="cal-weekdays">
-        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
-      </div>
-      <div class="cal-grid" id="drinkCalGrid"></div>
-    </div>
-    <div id="drinkMonthSummary"></div>
-
-    <div class="drink-day-panel" id="drinkDayPanel">
-      <div class="drink-day-panel-title" id="drinkDayPanelTitle">Today</div>
-      <ul class="drink-entry-list" id="drinkEntryList"></ul>
-      <div class="drink-add-row">
-        <select id="drinkTypeSelect" class="drink-type-select">
-          <option value="pint">Pint</option>
-          <option value="bottle">Bottle</option>
-          <option value="can">Can</option>
-          <option value="shot">Shot</option>
-          <option value="other">Other</option>
-        </select>
-        <input id="drinkQtyInput" type="number" class="task-xp-input drink-qty-input" min="1" step="1" value="1" placeholder="Qty" />
-        <input id="drinkCostInput" type="number" class="task-xp-input drink-cost-input" min="0" step="0.01" placeholder="£ cost" />
-      </div>
-      <input id="drinkOtherInput" type="text" class="drink-other-input" placeholder="What was it? (e.g. Cocktail)" maxlength="30" style="display:none;" />
-      <button class="add-btn-wide" id="drinkAddBtn" type="button">Add drink</button>
-      <div class="form-error" id="drinkFormError"></div>
-    </div>
-  </div>
-
   <div id="healthView" style="display:none">
     <div class="sync-bar">
       <button class="sync-btn" id="syncBtn" type="button">Sync now</button>
@@ -1073,8 +1050,8 @@
       <button class="tab-btn active" data-metric="steps" type="button">Steps</button>
       <button class="tab-btn" data-metric="battery" type="button">Battery</button>
       <button class="tab-btn" data-metric="running" type="button">Running</button>
-      <button class="tab-btn" data-metric="weight" type="button">Weight</button>
       <button class="tab-btn" data-metric="calories" type="button">Calories</button>
+      <button class="tab-btn" data-metric="drinks" type="button">Drinks</button>
     </div>
     <div id="healthMain">
     <div class="cal-card">
@@ -1132,7 +1109,43 @@
       </div>
     </div>
 
-    <div id="weightView" style="display:none">
+    <div id="drinksView" style="display:none">
+    <div class="cal-card">
+      <div class="cal-nav">
+        <button id="drinkCalPrev" aria-label="Previous month">‹</button>
+        <span id="drinkCalMonthLabel">Month Year</span>
+        <button id="drinkCalNext" aria-label="Next month">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+      </div>
+      <div class="cal-grid" id="drinkCalGrid"></div>
+    </div>
+    <div id="drinkMonthSummary"></div>
+
+    <div class="drink-day-panel" id="drinkDayPanel">
+      <div class="drink-day-panel-title" id="drinkDayPanelTitle">Today</div>
+      <ul class="drink-entry-list" id="drinkEntryList"></ul>
+      <div class="drink-add-row">
+        <select id="drinkTypeSelect" class="drink-type-select">
+          <option value="pint">Pint</option>
+          <option value="bottle">Bottle</option>
+          <option value="can">Can</option>
+          <option value="shot">Shot</option>
+          <option value="other">Other</option>
+        </select>
+        <input id="drinkQtyInput" type="number" class="task-xp-input drink-qty-input" min="1" step="1" value="1" placeholder="Qty" />
+        <input id="drinkCostInput" type="number" class="task-xp-input drink-cost-input" min="0" step="0.01" placeholder="£ cost" />
+      </div>
+      <input id="drinkOtherInput" type="text" class="drink-other-input" placeholder="What was it? (e.g. Cocktail)" maxlength="30" style="display:none;" />
+      <button class="add-btn-wide" id="drinkAddBtn" type="button">Add drink</button>
+      <div class="form-error" id="drinkFormError"></div>
+    </div>
+  </div>
+
+  </div>
+
+  <div id="weightView" style="display:none">
       <div class="day-panel" style="margin-top:0">
         <div class="day-panel-title">Weekly weigh-in</div>
         <div class="day-panel-sub" id="wtDue"></div>
@@ -1198,7 +1211,6 @@
       </div>
       <div id="wtHistory"></div>
     </div>
-  </div>
 
 </div>
 
@@ -1535,9 +1547,12 @@
   var manageListWrap = document.getElementById('manageListWrap');
   var celebrate = document.getElementById('celebrate');
   var tabTodayBtn = document.getElementById('tabTodayBtn');
-  var tabAddBtn = document.getElementById('tabAddBtn');
+  var tabWeightBtn = document.getElementById('tabWeightBtn');
+  var weightView = document.getElementById('weightView');
+  var openAddBtn = document.getElementById('openAddBtn');
+  var addBackBtn = document.getElementById('addBackBtn');
+  var tabsBar = document.getElementById('tabs');
   var tabCalendarBtn = document.getElementById('tabCalendarBtn');
-  var tabDrinksBtn = document.getElementById('tabDrinksBtn');
   var todayView = document.getElementById('todayView');
   var addView = document.getElementById('addView');
   var calendarView = document.getElementById('calendarView');
@@ -1580,27 +1595,33 @@
   // ---- Tabs ----
   var TABS = {
     today: { btn: tabTodayBtn, view: todayView },
-    add: { btn: tabAddBtn, view: addView },
+    add: { btn: null, view: addView },
     calendar: { btn: tabCalendarBtn, view: calendarView },
-    drinks: { btn: tabDrinksBtn, view: drinksView },
+    weight: { btn: tabWeightBtn, view: weightView },
     health: { btn: tabHealthBtn, view: healthView }
   };
   tabTodayBtn.addEventListener('click', function(){ switchTab('today'); });
-  tabAddBtn.addEventListener('click', function(){ switchTab('add'); });
+  tabWeightBtn.addEventListener('click', function(){ switchTab('weight'); });
+  openAddBtn.addEventListener('click', function(){ switchTab('add'); });
+  addBackBtn.addEventListener('click', function(){ switchTab(lastMainTab); });
   tabCalendarBtn.addEventListener('click', function(){ switchTab('calendar'); });
-  tabDrinksBtn.addEventListener('click', function(){ switchTab('drinks'); });
   tabHealthBtn.addEventListener('click', function(){ switchTab('health'); });
 
+  var lastMainTab = 'today';
   function switchTab(tab) {
+    if (tab !== 'add') lastMainTab = tab;
     Object.keys(TABS).forEach(function(key){
       var active = key === tab;
-      TABS[key].btn.classList.toggle('active', active);
+      if (TABS[key].btn) TABS[key].btn.classList.toggle('active', active);
       TABS[key].view.style.display = active ? '' : 'none';
     });
+    tabsBar.style.display = tab === 'add' ? 'none' : '';
+    openAddBtn.style.display = tab === 'add' ? 'none' : '';
+    window.scrollTo(0, 0);
     if (tab === 'today') render();
     if (tab === 'add') renderManageList();
     if (tab === 'calendar') renderCalendar();
-    if (tab === 'drinks') renderDrinksTab();
+    if (tab === 'weight') renderWeight();
     if (tab === 'health') renderHealthTab();
   }
 
@@ -1609,6 +1630,7 @@
     renderManageList();
     renderCalendar();
     renderDrinksTab();
+    renderWeight();
     renderHealthTab();
   }
 
@@ -2544,11 +2566,11 @@
     Array.prototype.forEach.call(healthMetricRow.querySelectorAll('[data-metric]'), function(b){
       b.classList.toggle('active', b.getAttribute('data-metric') === metric);
     });
-    var isWeight = metric === 'weight', isCalLog = metric === 'calories';
-    document.getElementById('healthMain').style.display = (isWeight || isCalLog) ? 'none' : '';
-    document.getElementById('weightView').style.display = isWeight ? '' : 'none';
+    var isCalLog = metric === 'calories', isDrinks = metric === 'drinks';
+    document.getElementById('healthMain').style.display = (isCalLog || isDrinks) ? 'none' : '';
     document.getElementById('calLogView').style.display = isCalLog ? '' : 'none';
-    if (isWeight) { renderWeight(); return; }
+    drinksView.style.display = isDrinks ? '' : 'none';
+    if (isDrinks) { renderDrinksTab(); return; }
     if (isCalLog) { renderCalLog(); return; }
 
     var monthDate = new Date(healthState.year, healthState.month, 1);
