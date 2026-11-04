@@ -1120,6 +1120,10 @@
           <label class="health-field"><span>Weight loss pace</span><select id="wtPace" class="cal-select">
             <option value="0.5">0.5 lb a week</option><option value="1">1 lb a week</option><option value="1.5">1.5 lb a week</option><option value="2">2 lb a week</option></select></label>
         </div>
+        <div class="health-fields">
+          <label class="health-field"><span>Baseline steps (a quiet day)</span><input id="wtSteps" type="number" inputmode="numeric" min="0" max="20000" step="500" class="amount-input" placeholder="3000" /></label>
+        </div>
+        <div class="day-hint" style="text-align:left">Steps above this, apart from the ones in your runs, add calories to your daily burn.</div>
         <button class="add-btn-wide" id="wtProfSave" type="button">Save details</button>
         <div class="day-hint" id="wtProfMsg"></div>
       </div>
@@ -1306,6 +1310,7 @@
     if (!parsed.profile || typeof parsed.profile !== 'object' || typeof parsed.profile.heightCm !== 'number' || typeof parsed.profile.age !== 'number') parsed.profile = null;
     if (!parsed.calories || typeof parsed.calories !== 'object') parsed.calories = {};
     Object.keys(parsed.calories).forEach(function(k){ if (typeof parsed.calories[k] !== 'number' || !isFinite(parsed.calories[k])) delete parsed.calories[k]; });
+    if (typeof parsed.stepBaseline !== 'number' || !(parsed.stepBaseline >= 0 && parsed.stepBaseline <= 20000)) parsed.stepBaseline = 3000;
     if (typeof parsed.calPace !== 'number' || !(parsed.calPace > 0 && parsed.calPace <= 3)) parsed.calPace = 1;
     if (typeof parsed.updatedAt !== 'number') parsed.updatedAt = Date.now();
     return parsed;
@@ -1388,6 +1393,7 @@
       profile: null,       // {heightFt, heightIn, heightCm, age, sex} for the calorie target
       calPace: 1,          // lb per week to lose
       calories: {},        // date -> kcal eaten
+      stepBaseline: 3000,  // steps on a quiet day, already inside the resting+daily-life burn
       celebratedDate: '',  // the day the "all done" celebration last played
       updatedAt: Date.now()
     };
@@ -3001,7 +3007,7 @@
   // Estimate: Mifflin-St Jeor resting burn x 1.2 for a non-running day, plus about
   // 1.39 kcal per kg of bodyweight per mile run (about 0.63 per lb), minus your chosen deficit.
   var calEl = {};
-  ['wtHFt','wtHIn','wtAge','wtSex','wtPace','wtProfSave','wtProfMsg'].forEach(function(id){ calEl[id] = document.getElementById(id); });
+  ['wtHFt','wtHIn','wtAge','wtSex','wtPace','wtSteps','wtProfSave','wtProfMsg'].forEach(function(id){ calEl[id] = document.getElementById(id); });
 
   function modelForKg(kg) {
     var p = state.profile;
@@ -3028,6 +3034,8 @@
     if (isNaN(age) || age < 14 || age > 100) { setWtMsg(calEl.wtProfMsg, 'Enter your age (14 to 100).', true); return; }
     state.profile = { heightFt: ft, heightIn: inch, heightCm: Math.round((ft * 12 + inch) * 2.54 * 10) / 10, age: age, sex: calEl.wtSex.value === 'female' ? 'female' : 'male' };
     state.calPace = parseFloat(calEl.wtPace.value) || 1;
+    var base = parseInt(calEl.wtSteps.value, 10);
+    state.stepBaseline = (isNaN(base) || base < 0 || base > 20000) ? 3000 : base;
     save();
     renderCalLog();
     setWtMsg(calEl.wtProfMsg, 'Saved ✓', false);
@@ -3046,6 +3054,7 @@
       calEl.wtHFt.value = p.heightFt; calEl.wtHIn.value = p.heightIn || 0; calEl.wtAge.value = p.age; calEl.wtSex.value = p.sex === 'female' ? 'female' : 'male';
     }
     calEl.wtPace.value = String(typeof state.calPace === 'number' ? state.calPace : 1);
+    if (document.activeElement !== calEl.wtSteps) calEl.wtSteps.value = typeof state.stepBaseline === 'number' ? state.stepBaseline : 3000;
   }
 
   // ---- Calories tab: calories eaten each day vs an estimate of what you burned ----
@@ -3061,11 +3070,23 @@
     entries.forEach(function(e){ if (e.key <= key) kg = e.kg; });
     return kg;
   }
+  // Estimated burn for a day = resting + daily life, plus running miles, plus walking steps above your
+  // quiet-day baseline (running steps, about 1,500 a mile, are taken out so they are not counted twice).
+  var RUN_STEPS_PER_MILE = 1500;
   function dayBurn(key) {
     var p = state.profile, kg = weightAtDate(key);
     if (!p || !p.heightCm || !p.age || kg === null) return null;
     var m = modelForKg(kg), miles = milesOnDay(key);
-    return { model: m, miles: miles, rest: m.base, run: m.perMile * miles, total: m.maintenance(miles), kg: kg };
+    var steps = healthValue(key, 'steps');
+    var baseline = typeof state.stepBaseline === 'number' ? state.stepBaseline : 3000;
+    var walkSteps = null, above = 0, extra = 0;
+    if (typeof steps === 'number') {
+      walkSteps = Math.max(0, steps - miles * RUN_STEPS_PER_MILE);
+      above = walkSteps - baseline;
+      extra = Math.max(-150, above * 0.00036 * kg);   // about 0.035 kcal a step at 96 kg
+    }
+    return { model: m, miles: miles, rest: m.base, run: m.perMile * miles, steps: steps, walkSteps: walkSteps, above: above, extra: extra,
+             total: m.maintenance(miles) + extra, kg: kg };
   }
   function deficitBand(def, target) {
     return def >= target ? 'bb-4' : def >= target / 2 ? 'bb-3' : def >= 0 ? 'bb-2' : 'bb-1';
@@ -3181,6 +3202,9 @@
       function row(a, b, strong) { return '<div class="wt-fc-row"><span>' + a + '</span><b' + (strong ? ' style="color:var(--lime)"' : '') + '>' + b + '</b></div>'; }
       bd = row('Resting + daily life', kcal(burnSel.rest) + ' kcal') +
            row('Running (' + (Math.round(burnSel.miles * 10) / 10) + ' mi)', burnSel.miles > 0 ? kcal(burnSel.run) + ' kcal' : '0 kcal') +
+           (burnSel.walkSteps !== null
+             ? row('Walking steps (' + kcal(Math.abs(burnSel.above)) + (burnSel.above >= 0 ? ' above' : ' below') + ' baseline)', (burnSel.extra >= 0 ? '+' : '−') + kcal(Math.abs(burnSel.extra)) + ' kcal')
+             : '') +
            row('Estimated burn', kcal(burnSel.total) + ' kcal');
       if (eatenSel !== null) {
         var d2 = burnSel.total - eatenSel;
@@ -3188,9 +3212,9 @@
               '<div class="wt-fc-row"><span><b style="color:var(--text)">' + (d2 >= 0 ? 'Deficit' : 'Surplus') + '</b></span><b style="color:' + (d2 >= target ? 'var(--lime)' : d2 >= 0 ? '#F2C14E' : '#FF8A73') + '">' + kcal(Math.abs(d2)) + ' kcal</b></div>' +
               '<div class="day-hint" style="text-align:left">Your target deficit is about ' + kcal(target) + ' kcal a day. ' + (d2 >= target ? 'On target.' : d2 >= 0 ? 'Below your target.' : 'Above what you burned.') + '</div>';
       } else {
-        bd += '<div class="day-hint" style="text-align:left">Target to eat: about ' + kcal(burnSel.model.target(burnSel.miles)) + ' kcal for a ' + (Math.round(burnSel.miles * 10) / 10) + ' mile day.</div>';
+        bd += '<div class="day-hint" style="text-align:left">Target to eat: about ' + kcal(Math.max(burnSel.model.floor, Math.round((burnSel.total - burnSel.model.deficit) / 10) * 10)) + ' kcal for this day.</div>';
       }
-      bd += '<div class="day-hint" style="text-align:left">Uses your weight of ' + fmtWeight(burnSel.kg, unit) + ' on this date.' + (sel === todayKey ? ' Today counts only the miles synced so far.' : '') + ' It is an estimate, so compare it with your weekly weight trend.</div>';
+      bd += '<div class="day-hint" style="text-align:left">Uses your weight of ' + fmtWeight(burnSel.kg, unit) + ' on this date.' + (burnSel.walkSteps === null ? ' No step data for this day, so only the baseline is used.' : '') + (sel === todayKey ? ' Today counts only the miles and steps synced so far.' : '') + ' It is an estimate, so compare it with your weekly weight trend.</div>';
     }
     kcEl.kcBreakdown.innerHTML = bd;
   }
