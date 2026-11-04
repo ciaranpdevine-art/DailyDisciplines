@@ -923,7 +923,9 @@
   .wt-goal { stroke: var(--text-dim); stroke-width: 1.2; stroke-dasharray: 2 4; }
   .wt-goal-label { fill: var(--text-dim); font-size: 9.5px; font-family: var(--font-head); }
   .wt-fc-row { display: flex; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--text-dim); }
-  .wt-fc-row b { color: var(--text); font-family: var(--font-head); }
+  .wt-fc-row { align-items: center; gap: 12px; }
+  .wt-fc-row > span { flex: 1; min-width: 0; }
+  .wt-fc-row b { color: var(--text); font-family: var(--font-head); white-space: nowrap; flex-shrink: 0; text-align: right; }
   #weightView .day-panel, #calLogView .day-panel { margin-top: 14px; }
   #weightView .health-fields { flex-wrap: wrap; }
   .wt-date-field { flex: 1 1 100% !important; }
