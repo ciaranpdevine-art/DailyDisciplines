@@ -2490,7 +2490,7 @@
     Object.keys(garminRuns).forEach(function(id){
       var r = garminRuns[id];
       if (r && r.date === dateKey && typeof r.distance === 'number' && typeof r.duration === 'number') {
-        out.push({ id: id, distance: r.distance, duration: r.duration, avgHr: r.avgHr, elevation: r.elevation, type: r.type });
+        out.push({ id: id, distance: r.distance, duration: r.duration, avgHr: r.avgHr, elevation: r.elevation, type: r.type, steps: r.steps, avgCadence: r.avgCadence });
       }
     });
     out.sort(function(a, b){ return a.id < b.id ? -1 : 1; });
@@ -3074,18 +3074,24 @@
   }
   // Estimated burn for a day = resting + daily life, plus running miles, plus walking steps above your
   // quiet-day baseline (running steps, about 1,500 a mile, are taken out so they are not counted twice).
-  var RUN_STEPS_PER_MILE = 1500;
+  var RUN_STEPS_PER_MILE = 1700;   // used only when Garmin gives no step count or cadence for a run
   function dayBurn(key) {
     var p = state.profile, kg = weightAtDate(key);
     if (!p || !p.heightCm || !p.age || kg === null) return null;
     var m = modelForKg(kg), miles = milesOnDay(key);
     var steps = healthValue(key, 'steps');
+    // Steps inside the day's runs: Garmin's count when we have it, else miles x 1,700.
+    var runSteps = 0;
+    runsOn(key).forEach(function(r){
+      runSteps += (typeof r.steps === 'number' && r.steps > 0) ? r.steps : (r.distance / 1609.344) * RUN_STEPS_PER_MILE;
+    });
     var baseline = typeof state.stepBaseline === 'number' ? state.stepBaseline : 3000;
     var walkSteps = null, above = 0, extra = 0;
     if (typeof steps === 'number') {
-      walkSteps = Math.max(0, steps - miles * RUN_STEPS_PER_MILE);
+      walkSteps = Math.max(0, steps - runSteps);
       above = walkSteps - baseline;
-      extra = Math.max(-150, above * 0.00036 * kg);   // about 0.035 kcal a step at 96 kg
+      // Today is not finished, so it can only add calories; past days can also lose a few.
+      extra = Math.max(key === todayStr() ? 0 : -150, above * 0.00036 * kg);   // about 0.035 kcal a step at 96 kg
     }
     return { model: m, miles: miles, rest: m.base, run: m.perMile * miles, steps: steps, walkSteps: walkSteps, above: above, extra: extra,
              total: m.maintenance(miles) + extra, kg: kg };

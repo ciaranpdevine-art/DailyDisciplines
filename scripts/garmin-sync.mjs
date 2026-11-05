@@ -171,6 +171,12 @@ function fromActivities(list, runs, typesSeen) {
     if (elev !== null) rec.elevation = Math.round(elev);
     const cal = num(item.calories);
     if (cal !== null) rec.calories = Math.round(cal);
+    // Steps taken during the run: Garmin's own count if it sends one, else cadence x time.
+    const cadence = num(item.averageRunningCadenceInStepsPerMinute) ?? num(item.averageRunCadence) ?? num(item.avgRunCadence) ?? num(item.averageCadence);
+    if (cadence !== null) rec.avgCadence = Math.round(cadence);
+    const runSteps = num(item.steps);
+    if (runSteps !== null && runSteps > 0) rec.steps = Math.round(runSteps);
+    else if (cadence !== null && cadence > 0) rec.steps = Math.round(cadence * duration / 60);
     runs[String(id)] = rec;
   }
 }
